@@ -20,6 +20,7 @@
     date: string;
     time: string;
     thumbnailUrl?: string;
+    verified?: 'correct' | 'false_positive' | 'unverified';
   }
 
   let loading = $state(true);
@@ -144,14 +145,38 @@
     playDetection(detection.id);
   }
 
-  function handleVerify(detection: Detection) {
-    // TODO: Implement verify action
-    logger.debug('Verify detection', { id: detection.id });
+  async function handleVerify(detection: Detection) {
+    try {
+      await fetchWithCSRF(`/api/v2/detections/${detection.id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verified: 'correct' }),
+      });
+      // Update detection in place
+      detections = detections.map(d =>
+        d.id === detection.id ? { ...d, verified: 'correct' as const } : d
+      );
+      logger.info('Detection verified', { id: detection.id });
+    } catch (err) {
+      logger.error('Failed to verify detection', err);
+    }
   }
 
-  function handleDismiss(detection: Detection) {
-    // TODO: Implement dismiss action
-    logger.debug('Dismiss detection', { id: detection.id });
+  async function handleDismiss(detection: Detection) {
+    try {
+      await fetchWithCSRF(`/api/v2/detections/${detection.id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verified: 'false_positive' }),
+      });
+      // Update detection in place
+      detections = detections.map(d =>
+        d.id === detection.id ? { ...d, verified: 'false_positive' as const } : d
+      );
+      logger.info('Detection dismissed', { id: detection.id });
+    } catch (err) {
+      logger.error('Failed to dismiss detection', err);
+    }
   }
 
   function handleSearchInput() {

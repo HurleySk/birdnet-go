@@ -11,6 +11,7 @@
     confidence: number;
     date: string;
     time: string;
+    verified?: 'correct' | 'false_positive' | 'unverified';
   }
 
   interface Props {
@@ -55,6 +56,10 @@
   function formatConfidence(confidence: number): string {
     return `${Math.round(confidence * 100)}%`;
   }
+
+  // Computed states for verification status
+  let isVerified = $derived(detection.verified === 'correct');
+  let isDismissed = $derived(detection.verified === 'false_positive');
 </script>
 
 <div class={cn('bg-base-100', className)}>
@@ -81,7 +86,14 @@
 
     <!-- Info -->
     <div class="flex-1 min-w-0">
-      <div class="font-medium truncate">{detection.commonName}</div>
+      <div class="font-medium truncate flex items-center gap-2">
+        {detection.commonName}
+        {#if isVerified}
+          <span class="badge badge-success badge-xs">Verified</span>
+        {:else if isDismissed}
+          <span class="badge badge-ghost badge-xs">Dismissed</span>
+        {/if}
+      </div>
       <div class="text-sm text-base-content/60">
         {formatConfidence(detection.confidence)}
       </div>
@@ -129,14 +141,34 @@
 
       <!-- Action Buttons -->
       <div class="flex gap-2 mt-3">
-        <button class="btn btn-success btn-sm flex-1" onclick={onVerify}>
-          {@html actionIcons.check}
-          Verify
-        </button>
-        <button class="btn btn-ghost btn-sm flex-1" onclick={onDismiss}>
-          {@html navigationIcons.close}
-          Dismiss
-        </button>
+        {#if isVerified}
+          <button class="btn btn-success btn-sm flex-1" disabled>
+            {@html actionIcons.check}
+            Verified
+          </button>
+          <button class="btn btn-ghost btn-sm flex-1" onclick={onDismiss}>
+            {@html navigationIcons.close}
+            Dismiss
+          </button>
+        {:else if isDismissed}
+          <button class="btn btn-ghost btn-sm flex-1" onclick={onVerify}>
+            {@html actionIcons.check}
+            Verify
+          </button>
+          <button class="btn btn-ghost btn-sm flex-1" disabled>
+            {@html navigationIcons.close}
+            Dismissed
+          </button>
+        {:else}
+          <button class="btn btn-success btn-sm flex-1" onclick={onVerify}>
+            {@html actionIcons.check}
+            Verify
+          </button>
+          <button class="btn btn-ghost btn-sm flex-1" onclick={onDismiss}>
+            {@html navigationIcons.close}
+            Dismiss
+          </button>
+        {/if}
       </div>
     </div>
   {/if}
