@@ -9,6 +9,14 @@
   import MobileSpeciesDetailPage from './lib/mobile/features/analytics/MobileSpeciesDetailPage.svelte';
   import MobileSettingsHubPage from './lib/mobile/features/settings/MobileSettingsHubPage.svelte';
   import MobileMainSettingsPage from './lib/mobile/features/settings/pages/MobileMainSettingsPage.svelte';
+  import MobileAudioSettingsPage from './lib/mobile/features/settings/pages/MobileAudioSettingsPage.svelte';
+  import MobileFilterSettingsPage from './lib/mobile/features/settings/pages/MobileFilterSettingsPage.svelte';
+  import MobileIntegrationSettingsPage from './lib/mobile/features/settings/pages/MobileIntegrationSettingsPage.svelte';
+  import MobileNotificationsSettingsPage from './lib/mobile/features/settings/pages/MobileNotificationsSettingsPage.svelte';
+  import MobileUISettingsPage from './lib/mobile/features/settings/pages/MobileUISettingsPage.svelte';
+  import MobileSecuritySettingsPage from './lib/mobile/features/settings/pages/MobileSecuritySettingsPage.svelte';
+  import MobileSpeciesSettingsPage from './lib/mobile/features/settings/pages/MobileSpeciesSettingsPage.svelte';
+  import MobileSupportSettingsPage from './lib/mobile/features/settings/pages/MobileSupportSettingsPage.svelte';
   import MobileSystemPage from './lib/mobile/features/system/MobileSystemPage.svelte';
   import MobileAboutPage from './lib/mobile/features/about/MobileAboutPage.svelte';
   import MobileNotificationsPage from './lib/mobile/features/notifications/MobileNotificationsPage.svelte';
@@ -410,6 +418,22 @@
       />
     {:else if currentRoute === 'settings-section' && settingsSection === 'main'}
       <MobileMainSettingsPage />
+    {:else if currentRoute === 'settings-section' && settingsSection === 'userinterface'}
+      <MobileUISettingsPage />
+    {:else if currentRoute === 'settings-section' && settingsSection === 'audio'}
+      <MobileAudioSettingsPage />
+    {:else if currentRoute === 'settings-section' && settingsSection === 'detectionfilters'}
+      <MobileFilterSettingsPage />
+    {:else if currentRoute === 'settings-section' && settingsSection === 'integrations'}
+      <MobileIntegrationSettingsPage />
+    {:else if currentRoute === 'settings-section' && settingsSection === 'security'}
+      <MobileSecuritySettingsPage />
+    {:else if currentRoute === 'settings-section' && settingsSection === 'species'}
+      <MobileSpeciesSettingsPage />
+    {:else if currentRoute === 'settings-section' && settingsSection === 'notifications'}
+      <MobileNotificationsSettingsPage />
+    {:else if currentRoute === 'settings-section' && settingsSection === 'support'}
+      <MobileSupportSettingsPage />
     {:else if currentRoute === 'system'}
       <MobileSystemPage />
     {:else if currentRoute === 'about'}
@@ -453,7 +477,7 @@
       {@render renderRoute(About)}
     {:else if currentRoute === 'system'}
       {@render renderRoute(System)}
-    {:else if currentRoute === 'settings'}
+    {:else if currentRoute === 'settings' || currentRoute === 'settings-section'}
       {@render renderRoute(Settings)}
     {:else if currentRoute === 'detections'}
       {@render renderRoute(Detections)}

@@ -755,6 +755,35 @@
       "species": "Lajit",
       "support": "Tuki"
     },
+    "mobile": {
+      "main": {
+        "description": "Solmun nimi, malli ja sijainti"
+      },
+      "ui": {
+        "description": "Teema, kieli ja näyttö"
+      },
+      "audio": {
+        "description": "Tallennuslähteet ja suodattimet"
+      },
+      "filters": {
+        "description": "Yksityisyys- ja tunnistussuodattimet"
+      },
+      "integrations": {
+        "description": "BirdWeather, MQTT ja muut"
+      },
+      "security": {
+        "description": "Todennus ja käyttöoikeudet"
+      },
+      "species": {
+        "description": "Hallitse lajiasetuksia"
+      },
+      "notifications": {
+        "description": "Hälytykset ja push-ilmoitukset"
+      },
+      "support": {
+        "description": "Ohje ja diagnostiikka"
+      }
+    },
     "notFound": {
       "title": "Asetuksia ei löytynyt",
       "message": "Pyydettyä asetusosaa \"{section}\" ei löytynyt."

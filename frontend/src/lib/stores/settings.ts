@@ -847,6 +847,14 @@ export const settingsActions = {
         coercedFormData.birdnet.labelPath = null;
       }
 
+      // Strip frontend-only fields that backend doesn't recognize
+      // speciesCount is computed by backend from lat/long/threshold, not stored
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- intentionally destructuring to omit speciesCount
+      const { speciesCount, ...rangeFilterWithoutSpeciesCount } =
+        coercedFormData.birdnet.rangeFilter;
+      coercedFormData.birdnet.rangeFilter =
+        rangeFilterWithoutSpeciesCount as typeof coercedFormData.birdnet.rangeFilter;
+
       await settingsAPI.save(coercedFormData);
 
       // Check if UI locale changed and apply it

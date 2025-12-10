@@ -755,6 +755,35 @@
       "species": "Espèces",
       "support": "Support"
     },
+    "mobile": {
+      "main": {
+        "description": "Nom du nœud, modèle et emplacement"
+      },
+      "ui": {
+        "description": "Thème, langue et affichage"
+      },
+      "audio": {
+        "description": "Sources de capture et filtres"
+      },
+      "filters": {
+        "description": "Filtres de confidentialité et détection"
+      },
+      "integrations": {
+        "description": "BirdWeather, MQTT et plus"
+      },
+      "security": {
+        "description": "Authentification et accès"
+      },
+      "species": {
+        "description": "Gérer les paramètres d'espèces"
+      },
+      "notifications": {
+        "description": "Alertes et notifications push"
+      },
+      "support": {
+        "description": "Aide et diagnostics"
+      }
+    },
     "notFound": {
       "title": "Paramètres non trouvés",
       "message": "Les paramètres de la section \"{section}\" n'ont pas pu être trouvés."

@@ -755,6 +755,35 @@
       "notifications": "Meldings instellingen",
       "support": "Ondersteuning"
     },
+    "mobile": {
+      "main": {
+        "description": "Knooppuntnaam, model en locatie"
+      },
+      "ui": {
+        "description": "Thema, taal en weergave"
+      },
+      "audio": {
+        "description": "Opnamebronnen en filters"
+      },
+      "filters": {
+        "description": "Privacy- en detectiefilters"
+      },
+      "integrations": {
+        "description": "BirdWeather, MQTT en meer"
+      },
+      "security": {
+        "description": "Authenticatie en toegang"
+      },
+      "species": {
+        "description": "Soortinstellingen beheren"
+      },
+      "notifications": {
+        "description": "Meldingen en pushmeldingen"
+      },
+      "support": {
+        "description": "Hulp en diagnostiek"
+      }
+    },
     "notFound": {
       "title": "Instellingen niet gevonden",
       "message": "De gevraagde instellingen groep \"{section}\" is niet gevonden."

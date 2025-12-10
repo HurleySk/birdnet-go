@@ -755,6 +755,35 @@
       "notifications": "Powiadomienia",
       "support": "Wsparcie"
     },
+    "mobile": {
+      "main": {
+        "description": "Nazwa węzła, model i lokalizacja"
+      },
+      "ui": {
+        "description": "Motyw, język i wyświetlanie"
+      },
+      "audio": {
+        "description": "Źródła nagrywania i filtry"
+      },
+      "filters": {
+        "description": "Filtry prywatności i wykrywania"
+      },
+      "integrations": {
+        "description": "BirdWeather, MQTT i więcej"
+      },
+      "security": {
+        "description": "Uwierzytelnianie i dostęp"
+      },
+      "species": {
+        "description": "Zarządzaj ustawieniami gatunków"
+      },
+      "notifications": {
+        "description": "Alerty i powiadomienia push"
+      },
+      "support": {
+        "description": "Pomoc i diagnostyka"
+      }
+    },
     "notFound": {
       "title": "Nie Znaleziono Ustawień",
       "message": "Nie można znaleźć żądanej sekcji ustawień \"{section}\"."

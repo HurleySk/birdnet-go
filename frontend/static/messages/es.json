@@ -755,6 +755,35 @@
       "species": "Especies",
       "support": "Soporte"
     },
+    "mobile": {
+      "main": {
+        "description": "Nombre del nodo, modelo y ubicación"
+      },
+      "ui": {
+        "description": "Tema, idioma y visualización"
+      },
+      "audio": {
+        "description": "Fuentes de captura y filtros"
+      },
+      "filters": {
+        "description": "Filtros de privacidad y detección"
+      },
+      "integrations": {
+        "description": "BirdWeather, MQTT y más"
+      },
+      "security": {
+        "description": "Autenticación y acceso"
+      },
+      "species": {
+        "description": "Gestionar ajustes de especies"
+      },
+      "notifications": {
+        "description": "Alertas y notificaciones push"
+      },
+      "support": {
+        "description": "Ayuda y diagnósticos"
+      }
+    },
     "notFound": {
       "title": "Configuración no encontrada",
       "message": "No se pudo encontrar la sección de configuración solicitada \"{section}\"."

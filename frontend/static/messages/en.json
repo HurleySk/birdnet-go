@@ -755,6 +755,35 @@
       "notifications": "Notifications",
       "support": "Support"
     },
+    "mobile": {
+      "main": {
+        "description": "Node name, model, and location"
+      },
+      "ui": {
+        "description": "Theme, language, and display"
+      },
+      "audio": {
+        "description": "Capture sources and filters"
+      },
+      "filters": {
+        "description": "Privacy and detection filters"
+      },
+      "integrations": {
+        "description": "BirdWeather, MQTT, and more"
+      },
+      "security": {
+        "description": "Authentication and access"
+      },
+      "species": {
+        "description": "Manage species settings"
+      },
+      "notifications": {
+        "description": "Alerts and push notifications"
+      },
+      "support": {
+        "description": "Help and diagnostics"
+      }
+    },
     "notFound": {
       "title": "Settings Not Found",
       "message": "The requested settings section \"{section}\" could not be found."

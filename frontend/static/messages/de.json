@@ -755,6 +755,35 @@
       "species": "Arten",
       "support": "Support"
     },
+    "mobile": {
+      "main": {
+        "description": "Knotenname, Modell und Standort"
+      },
+      "ui": {
+        "description": "Design, Sprache und Anzeige"
+      },
+      "audio": {
+        "description": "Aufnahmequellen und Filter"
+      },
+      "filters": {
+        "description": "Datenschutz- und Erkennungsfilter"
+      },
+      "integrations": {
+        "description": "BirdWeather, MQTT und mehr"
+      },
+      "security": {
+        "description": "Authentifizierung und Zugriff"
+      },
+      "species": {
+        "description": "Arteneinstellungen verwalten"
+      },
+      "notifications": {
+        "description": "Warnungen und Push-Benachrichtigungen"
+      },
+      "support": {
+        "description": "Hilfe und Diagnose"
+      }
+    },
     "notFound": {
       "title": "Einstellungen nicht gefunden",
       "message": "Der angeforderte Einstellungsbereich \"{section}\" konnte nicht gefunden werden."
