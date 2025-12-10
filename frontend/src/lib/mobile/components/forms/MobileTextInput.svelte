@@ -46,13 +46,13 @@
     onchange={handleChange}
   />
   {#if helpText && !error}
-    <label class="label">
+    <div class="label">
       <span class="label-text-alt text-base-content/60">{helpText}</span>
-    </label>
+    </div>
   {/if}
   {#if error}
-    <label class="label">
+    <div class="label">
       <span class="label-text-alt text-error">{error}</span>
-    </label>
+    </div>
   {/if}
 </div>
