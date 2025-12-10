@@ -15,7 +15,7 @@
 
   let { data = [], isLoading = false }: Props = $props();
 
-  // svelte-ignore non_reactive_update - canvasElement is a DOM reference via bind:this
+  // svelte-ignore non_reactive_update
   let canvasElement: HTMLCanvasElement;
   let chart: Chart | null = null;
   let mounted = $state(false);
