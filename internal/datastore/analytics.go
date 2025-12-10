@@ -38,8 +38,8 @@ type HourlyAnalyticsData struct {
 
 // DailyAnalyticsData represents detection counts by day
 type DailyAnalyticsData struct {
-	Date  string
-	Count int
+	Date  string `json:"date"`
+	Count int    `json:"count"`
 }
 
 // HourlyDistributionData represents aggregated detection counts by hour of day

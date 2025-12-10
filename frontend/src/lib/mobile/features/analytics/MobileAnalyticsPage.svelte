@@ -6,6 +6,8 @@
   import MobileStatCard from '../../components/ui/MobileStatCard.svelte';
   import ExpandableChartSection from '../../components/ui/ExpandableChartSection.svelte';
   import SpeciesRow from '../../components/species/SpeciesRow.svelte';
+  import MobileHourlyChart from '../../components/charts/MobileHourlyChart.svelte';
+  import MobileDailyTrendChart from '../../components/charts/MobileDailyTrendChart.svelte';
 
   const logger = getLogger('mobile-analytics');
 
@@ -21,6 +23,11 @@
     count: number;
   }
 
+  interface DailyData {
+    date: string;
+    count: number;
+  }
+
   interface AnalyticsData {
     totalDetections: number;
     uniqueSpecies: number;
@@ -28,6 +35,7 @@
     topSpecies: string;
     species: SpeciesSummary[];
     hourlyData: HourlyData[];
+    dailyData: DailyData[];
   }
 
   let loading = $state(true);
@@ -80,6 +88,16 @@
       }
       const hourlyData: HourlyData[] = await hourlyResponse.json();
 
+      // Fetch daily distribution
+      const dailyResponse = await fetch(
+        `/api/v2/analytics/time/daily?start_date=${startDate}&end_date=${today}`
+      );
+      if (!dailyResponse.ok) {
+        throw new Error('Failed to fetch daily data');
+      }
+      const dailyResult = await dailyResponse.json();
+      const dailyData: DailyData[] = dailyResult.data || [];
+
       // Calculate summary stats
       const totalDetections = speciesData.reduce((sum, s) => sum + s.count, 0);
       const uniqueSpecies = speciesData.length;
@@ -93,6 +111,7 @@
         topSpecies,
         species: speciesData,
         hourlyData,
+        dailyData,
       };
     } catch (err) {
       logger.error('Failed to load analytics', err);
@@ -152,11 +171,7 @@
       expanded={expandedSection === 'trends'}
       onToggle={() => toggleSection('trends')}
     >
-      <div
-        class="h-48 bg-base-200 rounded-lg flex items-center justify-center text-base-content/40"
-      >
-        Chart placeholder - Daily trend
-      </div>
+      <MobileDailyTrendChart data={data.dailyData} />
     </ExpandableChartSection>
 
     <ExpandableChartSection
@@ -164,11 +179,7 @@
       expanded={expandedSection === 'timeOfDay'}
       onToggle={() => toggleSection('timeOfDay')}
     >
-      <div
-        class="h-48 bg-base-200 rounded-lg flex items-center justify-center text-base-content/40"
-      >
-        Chart placeholder - Hourly distribution
-      </div>
+      <MobileHourlyChart data={data.hourlyData} />
     </ExpandableChartSection>
 
     <!-- Species List -->
