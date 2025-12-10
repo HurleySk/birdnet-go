@@ -103,9 +103,31 @@ func (ds *DataStore) SearchNotesAdvanced(filters *AdvancedSearchFilters) ([]Note
 	// Apply locked filter
 	query = applyLockedFilter(query, filters.Locked)
 
-	// Count total results before pagination
+	// Count total results before pagination - use separate query without Preloads
+	// (GORM Preload() combined with Count() can cause SQL generation issues)
+	countQuery := ds.DB.Table("notes").
+		Joins("LEFT JOIN note_reviews ON notes.id = note_reviews.note_id").
+		Joins("LEFT JOIN note_locks ON notes.id = note_locks.note_id")
+
+	// Apply the same filters to count query
+	if filters.TextQuery != "" {
+		countQuery = countQuery.Where("common_name LIKE ? OR scientific_name LIKE ?",
+			"%"+filters.TextQuery+"%", "%"+filters.TextQuery+"%")
+	}
+	countQuery = applyConfidenceFilter(countQuery, filters.Confidence)
+	countQuery = applyDateRangeFilter(countQuery, filters.DateRange)
+	countQuery = applyHourFilter(countQuery, filters.Hour)
+	countQuery = applyTimeOfDayFilter(countQuery, filters.TimeOfDay)
+	if len(filters.Species) > 0 {
+		countQuery = countQuery.Where("species_code IN ? OR scientific_name IN ?", filters.Species, filters.Species)
+	}
+	if len(filters.Location) > 0 {
+		countQuery = countQuery.Where("source IN ?", filters.Location)
+	}
+	countQuery = applyVerifiedFilter(countQuery, filters.Verified)
+	countQuery = applyLockedFilter(countQuery, filters.Locked)
+
 	var totalCount int64
-	countQuery := query.Session(&gorm.Session{})
 	if err := countQuery.Count(&totalCount).Error; err != nil {
 		return nil, 0, errors.Newf("failed to count advanced search results: %w", err).
 			Context("operation", "count_advanced_search_results").
