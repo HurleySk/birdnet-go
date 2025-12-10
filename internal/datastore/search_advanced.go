@@ -3,8 +3,6 @@ package datastore
 
 import (
 	"fmt"
-	"log"
-	"runtime/debug"
 	"strings"
 	"time"
 
@@ -49,17 +47,6 @@ type DateRange struct {
 // SearchNotesAdvanced performs an advanced search with multiple filter support
 // This is a new method that doesn't break the existing SearchNotes method
 func (ds *DataStore) SearchNotesAdvanced(filters *AdvancedSearchFilters) (notes []Note, totalCount int64, err error) {
-	// Panic recovery to diagnose silent 500 errors
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("PANIC in SearchNotesAdvanced: %v\nFilters: %+v\nStack:\n%s", r, filters, debug.Stack())
-			err = errors.Newf("panic in SearchNotesAdvanced: %v", r).
-				Component("datastore").
-				Category(errors.CategoryDatabase).
-				Build()
-		}
-	}()
-
 	// Track metrics
 	// TODO: Add metrics tracking when IncrementSearches method is available
 	// ds.metricsMu.RLock()
@@ -154,7 +141,7 @@ func (ds *DataStore) SearchNotesAdvanced(filters *AdvancedSearchFilters) (notes 
 	if filters.SortAscending {
 		order = "ASC"
 	}
-	query = query.Order("id " + order)
+	query = query.Order("notes.id " + order)
 
 	// Apply pagination
 	if filters.Limit > 0 {
