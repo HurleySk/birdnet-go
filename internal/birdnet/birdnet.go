@@ -125,7 +125,9 @@ func NewBirdNET(settings *conf.Settings) (*BirdNET, error) {
 	inputLocale := strings.ToLower(settings.BirdNET.Locale)
 	normalizedLocale, err := conf.NormalizeLocale(inputLocale)
 	if err != nil {
-		return nil, err
+		// Log warning but continue with fallback locale
+		fmt.Printf("⚠️  Label file warning: locale '%s' not available, using '%s' instead\n",
+			inputLocale, normalizedLocale)
 	}
 	settings.BirdNET.Locale = normalizedLocale
 
