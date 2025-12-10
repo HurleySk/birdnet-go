@@ -3,6 +3,8 @@ package datastore
 
 import (
 	"fmt"
+	"log"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -46,7 +48,18 @@ type DateRange struct {
 
 // SearchNotesAdvanced performs an advanced search with multiple filter support
 // This is a new method that doesn't break the existing SearchNotes method
-func (ds *DataStore) SearchNotesAdvanced(filters *AdvancedSearchFilters) ([]Note, int64, error) {
+func (ds *DataStore) SearchNotesAdvanced(filters *AdvancedSearchFilters) (notes []Note, totalCount int64, err error) {
+	// Panic recovery to diagnose silent 500 errors
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("PANIC in SearchNotesAdvanced: %v\nFilters: %+v\nStack:\n%s", r, filters, debug.Stack())
+			err = errors.Newf("panic in SearchNotesAdvanced: %v", r).
+				Component("datastore").
+				Category(errors.CategoryDatabase).
+				Build()
+		}
+	}()
+
 	// Track metrics
 	// TODO: Add metrics tracking when IncrementSearches method is available
 	// ds.metricsMu.RLock()
@@ -127,8 +140,7 @@ func (ds *DataStore) SearchNotesAdvanced(filters *AdvancedSearchFilters) ([]Note
 	countQuery = applyVerifiedFilter(countQuery, filters.Verified)
 	countQuery = applyLockedFilter(countQuery, filters.Locked)
 
-	var totalCount int64
-	if err := countQuery.Count(&totalCount).Error; err != nil {
+	if err = countQuery.Count(&totalCount).Error; err != nil {
 		return nil, 0, errors.Newf("failed to count advanced search results: %w", err).
 			Context("operation", "count_advanced_search_results").
 			Context("filters", fmt.Sprintf("%+v", filters)).
@@ -153,8 +165,7 @@ func (ds *DataStore) SearchNotesAdvanced(filters *AdvancedSearchFilters) ([]Note
 	}
 
 	// Execute the query
-	var notes []Note
-	if err := query.Find(&notes).Error; err != nil {
+	if err = query.Find(&notes).Error; err != nil {
 		return nil, 0, errors.Newf("failed to execute advanced search: %w", err).
 			Context("operation", "advanced_search_notes").
 			Context("filters", fmt.Sprintf("%+v", filters)).
