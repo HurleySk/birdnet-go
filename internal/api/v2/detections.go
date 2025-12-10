@@ -433,7 +433,9 @@ func (c *Controller) getDetectionsByQueryType(params *detectionQueryParams) ([]d
 	hasAdvancedFilters := params.Confidence != "" || params.TimeOfDay != "" ||
 		params.HourRange != "" || params.Verified != "" ||
 		params.Location != "" || params.Locked != "" ||
-		params.Search != ""
+		params.Search != "" ||
+		params.StartDate != "" || params.EndDate != "" ||
+		params.Date != "" || params.Species != ""
 
 	switch params.QueryType {
 	case "hourly":
