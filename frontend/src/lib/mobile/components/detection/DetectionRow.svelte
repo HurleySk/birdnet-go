@@ -16,6 +16,7 @@
   interface Props {
     detection: MobileDetection;
     expanded?: boolean;
+    isPlaying?: boolean;
     onToggle?: () => void;
     onPlay?: () => void;
     onVerify?: () => void;
@@ -26,6 +27,7 @@
   let {
     detection,
     expanded = false,
+    isPlaying = false,
     onToggle,
     onPlay,
     onVerify,
@@ -90,16 +92,20 @@
       {formatTime(detection.time)}
     </div>
 
-    <!-- Play Button -->
+    <!-- Play/Pause Button -->
     <button
-      class="btn btn-ghost btn-sm btn-square"
+      class={cn('btn btn-sm btn-square', isPlaying ? 'btn-primary' : 'btn-ghost')}
       onclick={e => {
         e.stopPropagation();
         onPlay?.();
       }}
-      aria-label="Play audio"
+      aria-label={isPlaying ? 'Pause audio' : 'Play audio'}
     >
-      {@html mediaIcons.play}
+      {#if isPlaying}
+        {@html mediaIcons.pause}
+      {:else}
+        {@html mediaIcons.play}
+      {/if}
     </button>
 
     <!-- Expand Chevron -->

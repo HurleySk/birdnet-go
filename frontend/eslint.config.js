@@ -60,6 +60,7 @@ const browserGlobals = {
   AddEventListenerOptions: 'readonly',
   TextDecoder: 'readonly',
   TextEncoder: 'readonly',
+  MediaError: 'readonly',
 };
 
 export default [

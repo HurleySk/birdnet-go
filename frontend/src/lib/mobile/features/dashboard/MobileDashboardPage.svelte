@@ -5,6 +5,8 @@
   import { getLocalDateString } from '$lib/utils/date';
   import DashboardSummaryCard from './DashboardSummaryCard.svelte';
   import DetectionRow from '../../components/detection/DetectionRow.svelte';
+  import MobileAudioPlayer from '../../components/audio/MobileAudioPlayer.svelte';
+  import { currentlyPlayingId, isPlaying, playDetection } from '$lib/stores/mobileAudio';
 
   const logger = getLogger('mobile-dashboard');
 
@@ -154,8 +156,7 @@
   }
 
   function handlePlay(detection: DashboardDetection) {
-    // TODO: Implement audio playback
-    logger.debug('Play detection', { id: detection.id });
+    playDetection(detection.id);
   }
 
   function handleVerify(detection: DashboardDetection) {
@@ -259,6 +260,7 @@
             <DetectionRow
               {detection}
               expanded={expandedId === detection.id}
+              isPlaying={$currentlyPlayingId === detection.id && $isPlaying}
               onToggle={() => toggleExpanded(detection.id)}
               onPlay={() => handlePlay(detection)}
               onVerify={() => handleVerify(detection)}
@@ -290,4 +292,7 @@
       {/if}
     </div>
   </div>
+
+  <!-- Hidden audio player - manages playback -->
+  <MobileAudioPlayer />
 </div>

@@ -4,7 +4,9 @@
   import { fetchWithCSRF } from '$lib/utils/api';
   import { actionIcons } from '$lib/utils/icons';
   import { getLogger } from '$lib/utils/logger';
+  import { currentlyPlayingId, isPlaying, playDetection } from '$lib/stores/mobileAudio';
   import DetectionRow from '../../components/detection/DetectionRow.svelte';
+  import MobileAudioPlayer from '../../components/audio/MobileAudioPlayer.svelte';
   import FilterModal, { type FilterState } from '../../components/ui/FilterModal.svelte';
   import FilterBadge from '../../components/ui/FilterBadge.svelte';
 
@@ -27,10 +29,6 @@
   let searchQuery = $state('');
   let hasMore = $state(true);
   let loadingMore = $state(false);
-
-  // Audio playback
-  let audioElement: HTMLAudioElement | null = $state(null);
-  let playingId = $state<number | null>(null);
 
   // Filter state
   let showFilters = $state(false);
@@ -143,29 +141,7 @@
   }
 
   function handlePlay(detection: Detection) {
-    if (!audioElement) return;
-
-    // If same detection is playing, toggle pause/play
-    if (playingId === detection.id) {
-      if (audioElement.paused) {
-        audioElement.play().catch(err => logger.error('Audio play failed', err));
-      } else {
-        audioElement.pause();
-      }
-      return;
-    }
-
-    // Play new detection
-    playingId = detection.id;
-    audioElement.src = `/api/v2/audio/${detection.id}`;
-    audioElement.play().catch(err => {
-      logger.error('Audio play failed', err);
-      playingId = null;
-    });
-  }
-
-  function handleAudioEnded() {
-    playingId = null;
+    playDetection(detection.id);
   }
 
   function handleVerify(detection: Detection) {
@@ -257,6 +233,7 @@
           <DetectionRow
             {detection}
             expanded={expandedId === detection.id}
+            isPlaying={$currentlyPlayingId === detection.id && $isPlaying}
             onToggle={() => toggleExpanded(detection.id)}
             onPlay={() => handlePlay(detection)}
             onVerify={() => handleVerify(detection)}
@@ -296,5 +273,5 @@
   onClear={handleClearFilters}
 />
 
-<!-- Hidden audio element for playback -->
-<audio bind:this={audioElement} onended={handleAudioEnded} hidden></audio>
+<!-- Audio player component -->
+<MobileAudioPlayer />
