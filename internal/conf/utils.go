@@ -228,23 +228,22 @@ func RunningInContainer() bool {
 		return true
 	}
 
-	// Check cgroup for hints of container runtime.
-	file, err := os.Open("/proc/self/cgroup")
-	if err != nil {
-		fmt.Println("Error opening /proc/self/cgroup:", err)
-		return false
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Printf("Failed to close /proc/self/cgroup: %v", err)
-		}
-	}()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, "docker") || strings.Contains(line, "podman") {
-			return true
+	// Check cgroup for hints of container runtime (Linux only).
+	if runtime.GOOS == "linux" {
+		file, err := os.Open("/proc/self/cgroup")
+		if err == nil {
+			defer func() {
+				if err := file.Close(); err != nil {
+					log.Printf("Failed to close /proc/self/cgroup: %v", err)
+				}
+			}()
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				line := scanner.Text()
+				if strings.Contains(line, "docker") || strings.Contains(line, "podman") {
+					return true
+				}
+			}
 		}
 	}
 
