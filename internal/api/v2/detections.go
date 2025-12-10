@@ -429,10 +429,11 @@ func (c *Controller) GetDetections(ctx echo.Context) error {
 
 // getDetectionsByQueryType retrieves detections based on the query type
 func (c *Controller) getDetectionsByQueryType(params *detectionQueryParams) ([]datastore.Note, int64, error) {
-	// Check if advanced filters are present
+	// Check if advanced filters or search text are present
 	hasAdvancedFilters := params.Confidence != "" || params.TimeOfDay != "" ||
 		params.HourRange != "" || params.Verified != "" ||
-		params.Location != "" || params.Locked != ""
+		params.Location != "" || params.Locked != "" ||
+		params.Search != ""
 
 	switch params.QueryType {
 	case "hourly":
