@@ -791,6 +791,8 @@
     "actions": {
       "save": "Salvar alterações",
       "saving": "Salvando...",
+      "saved": "Salvo",
+      "saveFailed": "Falha ao salvar",
       "reset": "Redefinir",
       "resetAriaLabel": "Redefinir todas as alterações",
       "saveAriaLabel": "Salvar alterações",
@@ -1296,6 +1298,10 @@
           "24db": "24dB",
           "36db": "36dB",
           "48db": "48dB"
+        },
+        "emptyState": {
+          "title": "Nenhum filtro configurado",
+          "description": "Adicione um filtro abaixo para moldar seu áudio"
         }
       },
       "soundLevelMonitoring": {

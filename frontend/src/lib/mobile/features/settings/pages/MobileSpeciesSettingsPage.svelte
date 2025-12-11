@@ -17,12 +17,14 @@
   - Simplified species configuration (no inline actions editor)
 -->
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { t } from '$lib/i18n';
   import {
     settingsStore,
     settingsActions,
     speciesSettings,
     realtimeSettings,
+    isLoading,
   } from '$lib/stores/settings';
   import type { SpeciesConfig, SpeciesSettings } from '$lib/stores/settings';
   import MobileTextInput from '../../../components/forms/MobileTextInput.svelte';
@@ -54,6 +56,27 @@
 
   let store = $derived($settingsStore);
 
+  // Auto-save state
+  let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  let saveStatus = $state<'idle' | 'pending' | 'saving' | 'saved'>('idle');
+
+  function debouncedSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveStatus = 'pending';
+    saveTimeout = setTimeout(async () => {
+      saveStatus = 'saving';
+      await settingsActions.saveSettings();
+      saveStatus = 'saved';
+      setTimeout(() => {
+        saveStatus = 'idle';
+      }, 1500);
+    }, 800);
+  }
+
+  onMount(() => {
+    settingsActions.loadSettings();
+  });
+
   // Input values
   let includeInputValue = $state('');
   let excludeInputValue = $state('');
@@ -66,7 +89,7 @@
     const species = includeInputValue.trim();
     if (!species || settings.include.includes(species)) {
       if (settings.include.includes(species)) {
-        toastActions.warning(t('settings.species.alreadyInList'));
+        toastActions.warning('Species is already in the list');
       }
       return;
     }
@@ -80,6 +103,7 @@
       },
     });
     includeInputValue = '';
+    debouncedSave();
   }
 
   function removeIncludeSpecies(species: string) {
@@ -91,13 +115,14 @@
         include: updatedSpecies,
       },
     });
+    debouncedSave();
   }
 
   function addExcludeSpecies() {
     const species = excludeInputValue.trim();
     if (!species || settings.exclude.includes(species)) {
       if (settings.exclude.includes(species)) {
-        toastActions.warning(t('settings.species.alreadyInList'));
+        toastActions.warning('Species is already in the list');
       }
       return;
     }
@@ -111,6 +136,7 @@
       },
     });
     excludeInputValue = '';
+    debouncedSave();
   }
 
   function removeExcludeSpecies(species: string) {
@@ -122,6 +148,7 @@
         exclude: updatedSpecies,
       },
     });
+    debouncedSave();
   }
 
   function removeConfig(species: string) {
@@ -135,18 +162,19 @@
         config: newConfig,
       },
     });
+    debouncedSave();
   }
 
   async function addConfig() {
     const species = configInputValue.trim();
     if (!species) {
-      toastActions.error(t('settings.species.customConfiguration.emptySpeciesName'));
+      toastActions.error('Please enter a species name');
       return;
     }
 
     const threshold = Number(newThreshold);
     if (threshold < 0 || threshold > 1) {
-      toastActions.error(t('settings.species.customConfiguration.invalidThreshold'));
+      toastActions.error('Threshold must be between 0 and 1');
       return;
     }
 
@@ -191,12 +219,14 @@
     }
   }
 
-  async function handleSave() {
-    await settingsActions.saveSettings();
-  }
 </script>
 
-<div class="flex flex-col gap-6 p-4 pb-24">
+{#if $isLoading}
+  <div class="flex items-center justify-center p-8">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+{:else}
+<div class="flex flex-col gap-6 p-4 pb-24 overflow-x-hidden">
   <!-- Always Include Species -->
   <div class="space-y-4">
     <div>
@@ -253,7 +283,7 @@
         onclick={addIncludeSpecies}
         disabled={!includeInputValue.trim() || store.isLoading || store.isSaving}
       >
-        {t('settings.species.add')}
+        {t('settings.species.customConfiguration.labels.addButton')}
       </button>
     </div>
   </div>
@@ -314,7 +344,7 @@
         onclick={addExcludeSpecies}
         disabled={!excludeInputValue.trim() || store.isLoading || store.isSaving}
       >
-        {t('settings.species.add')}
+        {t('settings.species.customConfiguration.labels.addButton')}
       </button>
     </div>
   </div>
@@ -428,12 +458,31 @@
   </div>
 </div>
 
-<!-- Sticky save button -->
-<div class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 pb-safe">
-  <button class="btn btn-primary w-full h-12" disabled={store.isSaving} onclick={handleSave}>
-    {#if store.isSaving}
-      <span class="loading loading-spinner loading-sm"></span>
-    {/if}
-    {t('settings.actions.save')}
-  </button>
-</div>
+{/if}
+
+<!-- Auto-save status indicator -->
+{#if saveStatus !== 'idle'}
+  <div class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-100">
+    <div
+      class="px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium"
+      class:bg-base-200={saveStatus === 'pending'}
+      class:bg-primary={saveStatus === 'saving'}
+      class:text-primary-content={saveStatus === 'saving'}
+      class:bg-success={saveStatus === 'saved'}
+      class:text-success-content={saveStatus === 'saved'}
+    >
+      {#if saveStatus === 'pending'}
+        <span class="w-2 h-2 rounded-full bg-base-content/50 animate-pulse"></span>
+        <span>{t('settings.actions.unsavedChanges')}</span>
+      {:else if saveStatus === 'saving'}
+        <span class="loading loading-spinner loading-xs"></span>
+        <span>{t('settings.actions.saving')}</span>
+      {:else if saveStatus === 'saved'}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span>{t('settings.actions.saved')}</span>
+      {/if}
+    </div>
+  </div>
+{/if}

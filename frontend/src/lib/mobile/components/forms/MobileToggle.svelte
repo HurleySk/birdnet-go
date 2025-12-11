@@ -19,26 +19,28 @@
   }: Props = $props();
 
   function handleChange() {
-    checked = !checked;
+    // Note: checked is already updated by bind:checked before this runs
     onchange?.(checked);
   }
 </script>
 
 <div class="form-control w-full">
   <label class="label cursor-pointer justify-between py-4" for={id}>
-    <div class="flex flex-col gap-1">
+    <div class="flex flex-col gap-1 mr-4">
       <span class="label-text font-medium">{label}</span>
       {#if helpText}
         <span class="label-text-alt text-base-content/60">{helpText}</span>
       {/if}
     </div>
-    <input
-      {id}
-      type="checkbox"
-      class="toggle toggle-primary"
-      bind:checked
-      {disabled}
-      onchange={handleChange}
-    />
+    <div class="shrink-0">
+      <input
+        {id}
+        type="checkbox"
+        class="toggle toggle-primary"
+        bind:checked
+        {disabled}
+        onchange={handleChange}
+      />
+    </div>
   </label>
 </div>

@@ -791,6 +791,8 @@
     "actions": {
       "save": "Tallenna muutokset",
       "saving": "Tallennetaan...",
+      "saved": "Tallennettu",
+      "saveFailed": "Tallennus epäonnistui",
       "reset": "Palauta",
       "resetAriaLabel": "Palauta kaikki muutokset",
       "saveAriaLabel": "Tallenna muutokset",
@@ -1296,6 +1298,10 @@
           "24db": "24dB",
           "36db": "36dB",
           "48db": "48dB"
+        },
+        "emptyState": {
+          "title": "Ei suodattimia määritetty",
+          "description": "Lisää suodatin alla muokataksesi ääntäsi"
         }
       },
       "soundLevelMonitoring": {

@@ -187,10 +187,10 @@
     >
       {#if saveStatus === 'pending'}
         <span class="w-2 h-2 rounded-full bg-current animate-pulse"></span>
-        <span class="text-sm font-medium">Unsaved changes</span>
+        <span class="text-sm font-medium">{t('settings.actions.unsavedChanges')}</span>
       {:else if saveStatus === 'saving'}
         <span class="loading loading-spinner loading-xs"></span>
-        <span class="text-sm font-medium">Saving...</span>
+        <span class="text-sm font-medium">{t('settings.actions.saving')}</span>
       {:else if saveStatus === 'saved'}
         <svg
           class="w-4 h-4"
@@ -201,7 +201,7 @@
         >
           <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
         </svg>
-        <span class="text-sm font-medium">Saved</span>
+        <span class="text-sm font-medium">{t('settings.actions.saved')}</span>
       {:else if saveStatus === 'error'}
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path
@@ -210,7 +210,7 @@
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
           />
         </svg>
-        <span class="text-sm font-medium">Save failed</span>
+        <span class="text-sm font-medium">{t('settings.actions.saveFailed')}</span>
         <button
           class="ml-1 px-2 py-0.5 text-xs font-semibold rounded bg-error-content/20 hover:bg-error-content/30 transition-colors"
           onclick={retrySave}

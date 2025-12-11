@@ -791,6 +791,8 @@
     "actions": {
       "save": "Änderungen speichern",
       "saving": "Speichern...",
+      "saved": "Gespeichert",
+      "saveFailed": "Speichern fehlgeschlagen",
       "reset": "Zurücksetzen",
       "resetAriaLabel": "Alle Änderungen zurücksetzen",
       "saveAriaLabel": "Änderungen speichern",
@@ -1438,6 +1440,10 @@
           "24db": "24dB",
           "36db": "36dB",
           "48db": "48dB"
+        },
+        "emptyState": {
+          "title": "Keine Filter konfiguriert",
+          "description": "Fügen Sie unten einen Filter hinzu, um Ihr Audio zu formen"
         }
       },
       "soundLevelMonitoring": {

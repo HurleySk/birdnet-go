@@ -791,6 +791,8 @@
     "actions": {
       "save": "Save Changes",
       "saving": "Saving...",
+      "saved": "Saved",
+      "saveFailed": "Save failed",
       "reset": "Reset",
       "resetAriaLabel": "Reset all changes",
       "saveAriaLabel": "Save Changes",
@@ -1560,6 +1562,10 @@
           "24db": "24dB",
           "36db": "36dB",
           "48db": "48dB"
+        },
+        "emptyState": {
+          "title": "No filters configured",
+          "description": "Add a filter below to shape your audio"
         },
         "filterHelp": "Add multiple filters to shape the frequency response for optimal bird detection in your environment."
       },

@@ -791,6 +791,8 @@
     "actions": {
       "save": "Wijzigingen bewaren",
       "saving": "Bewaren ...",
+      "saved": "Opgeslagen",
+      "saveFailed": "Opslaan mislukt",
       "reset": "Zet terug",
       "resetAriaLabel": "Alle wijzigingen vergeten",
       "saveAriaLabel": "Wijzigingen bewaren",
@@ -1437,6 +1439,10 @@
           "24db": "24dB",
           "36db": "36dB",
           "48db": "48dB"
+        },
+        "emptyState": {
+          "title": "Geen filters geconfigureerd",
+          "description": "Voeg hieronder een filter toe om je audio te vormen"
         },
         "filterHelp": "Voeg meerdere filters toe om de frequentie respons te vormen voor optimale vogel detectie in jouw omgeving."
       },

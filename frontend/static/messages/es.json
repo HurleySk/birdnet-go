@@ -791,6 +791,8 @@
     "actions": {
       "save": "Guardar cambios",
       "saving": "Guardando...",
+      "saved": "Guardado",
+      "saveFailed": "Error al guardar",
       "reset": "Restablecer",
       "resetAriaLabel": "Restablecer todos los cambios",
       "saveAriaLabel": "Guardar cambios",
@@ -1295,6 +1297,10 @@
           "24db": "24dB",
           "36db": "36dB",
           "48db": "48dB"
+        },
+        "emptyState": {
+          "title": "No hay filtros configurados",
+          "description": "Añade un filtro abajo para dar forma a tu audio"
         },
         "filterHelp": "Añade múltiples filtros para dar forma a la respuesta de frecuencia para una detección óptima de aves en tu entorno."
       },

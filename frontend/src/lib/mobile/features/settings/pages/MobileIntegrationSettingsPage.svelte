@@ -1,13 +1,37 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { t } from '$lib/i18n';
   import {
     settingsStore,
     settingsActions,
     integrationSettings,
     realtimeSettings,
+    isLoading,
     type MQTTSettings,
   } from '$lib/stores/settings';
   import { MobileTextInput, MobileNumberInput, MobileToggle } from '../../../components/forms';
+
+  // Auto-save state
+  let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  let saveStatus = $state<'idle' | 'pending' | 'saving' | 'saved'>('idle');
+
+  function debouncedSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveStatus = 'pending';
+    saveTimeout = setTimeout(async () => {
+      saveStatus = 'saving';
+      await settingsActions.saveSettings();
+      saveStatus = 'saved';
+      setTimeout(() => {
+        saveStatus = 'idle';
+      }, 1500);
+    }, 800);
+  }
+
+  // Load settings on mount to ensure data is available before saving
+  onMount(() => {
+    settingsActions.loadSettings();
+  });
 
   let store = $derived($settingsStore);
 
@@ -45,23 +69,26 @@
     }
   );
 
-  // BirdWeather update handlers
+  // BirdWeather update handlers - all trigger debounced auto-save
   function updateBirdWeatherEnabled(enabled: boolean) {
     settingsActions.updateSection('realtime', {
       birdweather: { ...settings.birdweather!, enabled },
     });
+    debouncedSave();
   }
 
   function updateBirdWeatherId(id: string) {
     settingsActions.updateSection('realtime', {
       birdweather: { ...settings.birdweather!, id },
     });
+    debouncedSave();
   }
 
   function updateBirdWeatherThreshold(threshold: number) {
     settingsActions.updateSection('realtime', {
       birdweather: { ...settings.birdweather!, threshold },
     });
+    debouncedSave();
   }
 
   // MQTT update handlers
@@ -69,48 +96,56 @@
     settingsActions.updateSection('realtime', {
       mqtt: { ...settings.mqtt!, enabled },
     });
+    debouncedSave();
   }
 
   function updateMQTTBroker(broker: string) {
     settingsActions.updateSection('realtime', {
       mqtt: { ...settings.mqtt!, broker },
     });
+    debouncedSave();
   }
 
   function updateMQTTTopic(topic: string) {
     settingsActions.updateSection('realtime', {
       mqtt: { ...settings.mqtt!, topic },
     });
+    debouncedSave();
   }
 
   function updateMQTTUsername(username: string) {
     settingsActions.updateSection('realtime', {
       mqtt: { ...settings.mqtt!, username },
     });
+    debouncedSave();
   }
 
   function updateMQTTPassword(password: string) {
     settingsActions.updateSection('realtime', {
       mqtt: { ...settings.mqtt!, password },
     });
+    debouncedSave();
   }
 
   function updateMQTTTLSEnabled(enabled: boolean) {
     settingsActions.updateSection('realtime', {
       mqtt: { ...settings.mqtt!, tls: { ...settings.mqtt!.tls, enabled } },
     });
+    debouncedSave();
   }
 
   function updateMQTTTLSSkipVerify(skipVerify: boolean) {
     settingsActions.updateSection('realtime', {
       mqtt: { ...settings.mqtt!, tls: { ...settings.mqtt!.tls, skipVerify } },
     });
+    debouncedSave();
   }
 
   function updateMQTTRetain(retain: boolean) {
     settingsActions.updateSection('realtime', {
       mqtt: { ...(settings.mqtt as MQTTSettings), retain },
     });
+    debouncedSave();
   }
 
   // Observability update handlers
@@ -121,6 +156,7 @@
         listen: $realtimeSettings?.telemetry?.listen || '0.0.0.0:8090',
       },
     });
+    debouncedSave();
   }
 
   function updateObservabilityListen(listen: string) {
@@ -130,14 +166,16 @@
         listen,
       },
     });
-  }
-
-  async function handleSave() {
-    await settingsActions.saveSettings();
+    debouncedSave();
   }
 </script>
 
-<div class="flex flex-col gap-6 p-4 pb-24">
+{#if $isLoading}
+  <div class="flex items-center justify-center p-8">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+{:else}
+<div class="flex flex-col gap-6 p-4 pb-24 overflow-x-hidden">
   <!-- BirdWeather Settings -->
   <div class="space-y-4">
     <h2 class="text-lg font-semibold">{t('settings.integration.birdweather.title')}</h2>
@@ -288,17 +326,32 @@
     {/if}
   </div>
 
-  <!-- Sticky Save Button -->
-  <div class="fixed bottom-0 left-0 right-0 bg-base-100 p-4 border-t border-base-300 pb-safe">
-    <button
-      class="btn btn-primary w-full h-12"
-      onclick={handleSave}
-      disabled={store.isLoading || store.isSaving}
-    >
-      {#if store.isSaving}
-        <span class="loading loading-spinner loading-sm"></span>
-      {/if}
-      {t('settings.actions.save')}
-    </button>
-  </div>
 </div>
+{/if}
+
+<!-- Auto-save status indicator -->
+{#if saveStatus !== 'idle'}
+  <div class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-100">
+    <div
+      class="px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium"
+      class:bg-base-200={saveStatus === 'pending'}
+      class:bg-primary={saveStatus === 'saving'}
+      class:text-primary-content={saveStatus === 'saving'}
+      class:bg-success={saveStatus === 'saved'}
+      class:text-success-content={saveStatus === 'saved'}
+    >
+      {#if saveStatus === 'pending'}
+        <span class="w-2 h-2 rounded-full bg-base-content/50 animate-pulse"></span>
+        <span>{t('settings.actions.unsavedChanges')}</span>
+      {:else if saveStatus === 'saving'}
+        <span class="loading loading-spinner loading-xs"></span>
+        <span>{t('settings.actions.saving')}</span>
+      {:else if saveStatus === 'saved'}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span>{t('settings.actions.saved')}</span>
+      {/if}
+    </div>
+  </div>
+{/if}

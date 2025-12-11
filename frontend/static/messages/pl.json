@@ -791,6 +791,8 @@
     "actions": {
       "save": "Zapisz Zmiany",
       "saving": "Zapisywanie...",
+      "saved": "Zapisano",
+      "saveFailed": "Zapisywanie nie powiodło się",
       "reset": "Resetuj",
       "resetAriaLabel": "Resetuj wszystkie zmiany",
       "saveAriaLabel": "Zapisz Zmiany",
@@ -1437,6 +1439,10 @@
           "24db": "24dB",
           "36db": "36dB",
           "48db": "48dB"
+        },
+        "emptyState": {
+          "title": "Brak skonfigurowanych filtrów",
+          "description": "Dodaj filtr poniżej, aby kształtować dźwięk"
         },
         "filterHelp": "Dodaj wiele filtrów, aby ukształtować charakterystykę częstotliwościową dla optymalnej detekcji ptaków w twoim środowisku."
       },

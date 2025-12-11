@@ -14,6 +14,7 @@
   @component
 -->
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { t } from '$lib/i18n';
   import {
     settingsStore,
@@ -21,6 +22,7 @@
     privacyFilterSettings,
     dogBarkFilterSettings,
     realtimeSettings,
+    isLoading,
   } from '$lib/stores/settings';
   import {
     MobileNumberInput,
@@ -33,6 +35,28 @@
   import { Trash2 } from '@lucide/svelte';
 
   const logger = loggers.settings;
+
+  // Auto-save state
+  let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  let saveStatus = $state<'idle' | 'pending' | 'saving' | 'saved'>('idle');
+
+  function debouncedSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveStatus = 'pending';
+    saveTimeout = setTimeout(async () => {
+      saveStatus = 'saving';
+      await settingsActions.saveSettings();
+      saveStatus = 'saved';
+      setTimeout(() => {
+        saveStatus = 'idle';
+      }, 1500);
+    }, 800);
+  }
+
+  // Load settings on mount to ensure data is available before saving
+  onMount(() => {
+    settingsActions.loadSettings();
+  });
 
   let store = $derived($settingsStore);
 
@@ -113,12 +137,13 @@
     }
   }
 
-  // Privacy filter update handlers
+  // Privacy filter update handlers - all trigger debounced auto-save
   function updatePrivacyEnabled(enabled: boolean) {
     settingsActions.updateSection('realtime', {
       ...$realtimeSettings,
       privacyFilter: { ...settings.privacy, enabled },
     });
+    debouncedSave();
   }
 
   function updatePrivacyConfidence(confidence: number) {
@@ -126,6 +151,7 @@
       ...$realtimeSettings,
       privacyFilter: { ...settings.privacy, confidence },
     });
+    debouncedSave();
   }
 
   // Dog bark filter update handlers
@@ -134,6 +160,7 @@
       ...$realtimeSettings,
       dogBarkFilter: { ...settings.dogBark, enabled },
     });
+    debouncedSave();
   }
 
   function updateDogBarkConfidence(confidence: number) {
@@ -141,6 +168,7 @@
       ...$realtimeSettings,
       dogBarkFilter: { ...settings.dogBark, confidence },
     });
+    debouncedSave();
   }
 
   function updateDogBarkRemember(remember: number) {
@@ -148,6 +176,7 @@
       ...$realtimeSettings,
       dogBarkFilter: { ...settings.dogBark, remember },
     });
+    debouncedSave();
   }
 
   // Species management functions
@@ -172,6 +201,7 @@
 
     newSpecies = '';
     showSpeciesInput = false;
+    debouncedSave();
   }
 
   function removeSpecies(index: number) {
@@ -180,15 +210,12 @@
       ...$realtimeSettings,
       dogBarkFilter: { ...settings.dogBark, species: updatedSpecies },
     });
+    debouncedSave();
   }
 
   function cancelAddSpecies() {
     newSpecies = '';
     showSpeciesInput = false;
-  }
-
-  async function handleSave() {
-    await settingsActions.saveSettings();
   }
 
   // Filtered species list for autocomplete
@@ -199,7 +226,12 @@
   );
 </script>
 
-<div class="flex flex-col gap-6 p-4 pb-safe">
+{#if $isLoading}
+  <div class="flex items-center justify-center p-8">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+{:else}
+<div class="flex flex-col gap-6 p-4 pb-24 overflow-x-hidden">
   <!-- Privacy Filter -->
   <div class="space-y-4">
     <h2 class="text-lg font-semibold">{t('settings.filters.privacyFiltering.title')}</h2>
@@ -355,17 +387,32 @@
     {/if}
   </div>
 
-  <!-- Sticky Save Button -->
-  <div class="sticky bottom-0 bg-base-100 pt-4 pb-safe">
-    <button
-      class="btn btn-primary w-full h-12"
-      onclick={handleSave}
-      disabled={store.isLoading || store.isSaving}
-    >
-      {#if store.isSaving}
-        <span class="loading loading-spinner loading-sm"></span>
-      {/if}
-      {t('settings.actions.save')}
-    </button>
-  </div>
 </div>
+{/if}
+
+<!-- Auto-save status indicator -->
+{#if saveStatus !== 'idle'}
+  <div class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-100">
+    <div
+      class="px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium"
+      class:bg-base-200={saveStatus === 'pending'}
+      class:bg-primary={saveStatus === 'saving'}
+      class:text-primary-content={saveStatus === 'saving'}
+      class:bg-success={saveStatus === 'saved'}
+      class:text-success-content={saveStatus === 'saved'}
+    >
+      {#if saveStatus === 'pending'}
+        <span class="w-2 h-2 rounded-full bg-base-content/50 animate-pulse"></span>
+        <span>{t('settings.actions.unsavedChanges')}</span>
+      {:else if saveStatus === 'saving'}
+        <span class="loading loading-spinner loading-xs"></span>
+        <span>{t('settings.actions.saving')}</span>
+      {:else if saveStatus === 'saved'}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span>{t('settings.actions.saved')}</span>
+      {/if}
+    </div>
+  </div>
+{/if}

@@ -18,8 +18,9 @@
   - Collapsible OAuth sections
 -->
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { t } from '$lib/i18n';
-  import { settingsStore, settingsActions, securitySettings } from '$lib/stores/settings';
+  import { settingsStore, settingsActions, securitySettings, isLoading } from '$lib/stores/settings';
   import MobileTextInput from '../../../components/forms/MobileTextInput.svelte';
   import MobileToggle from '../../../components/forms/MobileToggle.svelte';
 
@@ -52,6 +53,28 @@
 
   let store = $derived($settingsStore);
 
+  // Auto-save state
+  let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  let saveStatus = $state<'idle' | 'pending' | 'saving' | 'saved'>('idle');
+
+  function debouncedSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveStatus = 'pending';
+    saveTimeout = setTimeout(async () => {
+      saveStatus = 'saving';
+      await settingsActions.saveSettings();
+      saveStatus = 'saved';
+      setTimeout(() => {
+        saveStatus = 'idle';
+      }, 1500);
+    }, 800);
+  }
+
+  // Load settings on mount to ensure data is available before saving
+  onMount(() => {
+    settingsActions.loadSettings();
+  });
+
   // Generate redirect URIs dynamically
   let currentHost = $derived(
     typeof window !== 'undefined'
@@ -64,12 +87,13 @@
   let googleRedirectURI = $derived(`${currentHost}/auth/google/callback`);
   let githubRedirectURI = $derived(`${currentHost}/auth/github/callback`);
 
-  // Update handlers
+  // Update handlers - all trigger debounced auto-save
   function updateAutoTLSEnabled(enabled: boolean) {
     settingsActions.updateSection('security', {
       ...settings,
       autoTls: enabled,
     });
+    debouncedSave();
   }
 
   function updateAutoTLSHost(host: string) {
@@ -77,6 +101,7 @@
       ...settings,
       host: host,
     });
+    debouncedSave();
   }
 
   function updateBasicAuthEnabled(enabled: boolean) {
@@ -84,6 +109,7 @@
       ...settings,
       basicAuth: { ...settings.basicAuth, enabled },
     });
+    debouncedSave();
   }
 
   function updateBasicAuthPassword(password: string) {
@@ -91,6 +117,7 @@
       ...settings,
       basicAuth: { ...settings.basicAuth, password },
     });
+    debouncedSave();
   }
 
   function updateGoogleAuthEnabled(enabled: boolean) {
@@ -98,6 +125,7 @@
       ...settings,
       googleAuth: { ...settings.googleAuth, enabled },
     });
+    debouncedSave();
   }
 
   function updateGoogleClientId(clientId: string) {
@@ -105,6 +133,7 @@
       ...settings,
       googleAuth: { ...settings.googleAuth, clientId },
     });
+    debouncedSave();
   }
 
   function updateGoogleClientSecret(clientSecret: string) {
@@ -112,6 +141,7 @@
       ...settings,
       googleAuth: { ...settings.googleAuth, clientSecret },
     });
+    debouncedSave();
   }
 
   function updateGoogleUserId(userId: string) {
@@ -119,6 +149,7 @@
       ...settings,
       googleAuth: { ...settings.googleAuth, userId },
     });
+    debouncedSave();
   }
 
   function updateGithubAuthEnabled(enabled: boolean) {
@@ -126,6 +157,7 @@
       ...settings,
       githubAuth: { ...settings.githubAuth, enabled },
     });
+    debouncedSave();
   }
 
   function updateGithubClientId(clientId: string) {
@@ -133,6 +165,7 @@
       ...settings,
       githubAuth: { ...settings.githubAuth, clientId },
     });
+    debouncedSave();
   }
 
   function updateGithubClientSecret(clientSecret: string) {
@@ -140,6 +173,7 @@
       ...settings,
       githubAuth: { ...settings.githubAuth, clientSecret },
     });
+    debouncedSave();
   }
 
   function updateGithubUserId(userId: string) {
@@ -147,6 +181,7 @@
       ...settings,
       githubAuth: { ...settings.githubAuth, userId },
     });
+    debouncedSave();
   }
 
   function updateSubnetBypassEnabled(enabled: boolean) {
@@ -154,6 +189,7 @@
       ...settings,
       allowSubnetBypass: { ...settings.allowSubnetBypass, enabled },
     });
+    debouncedSave();
   }
 
   function updateSubnetBypassSubnet(subnet: string) {
@@ -161,21 +197,23 @@
       ...settings,
       allowSubnetBypass: { ...settings.allowSubnetBypass, subnet },
     });
-  }
-
-  async function handleSave() {
-    await settingsActions.saveSettings();
+    debouncedSave();
   }
 </script>
 
-<div class="flex flex-col gap-6 p-4 pb-24">
-  <!-- Server Configuration -->
+{#if $isLoading}
+  <div class="flex items-center justify-center p-8">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+{:else}
+  <div class="flex flex-col gap-6 p-4 pb-24 overflow-x-hidden">
+    <!-- Server Configuration -->
   <div class="space-y-4">
     <h2 class="text-lg font-semibold">{t('settings.security.serverConfiguration.title')}</h2>
 
     <MobileTextInput
       label={t('settings.security.hostLabel')}
-      bind:value={settings.host}
+      value={settings.host}
       placeholder={t('settings.security.placeholders.host')}
       disabled={store.isLoading || store.isSaving}
       onchange={updateAutoTLSHost}
@@ -187,7 +225,7 @@
 
     <MobileToggle
       label={t('settings.security.serverConfiguration.autoTlsLabel')}
-      bind:checked={settings.autoTls}
+      checked={settings.autoTls}
       disabled={store.isLoading || store.isSaving}
       onchange={updateAutoTLSEnabled}
     />
@@ -212,14 +250,14 @@
 
     <MobileToggle
       label={t('settings.security.basicAuthentication.enableLabel')}
-      bind:checked={settings.basicAuth.enabled}
+      checked={settings.basicAuth.enabled}
       disabled={store.isLoading || store.isSaving}
       onchange={updateBasicAuthEnabled}
     />
 
     <MobileTextInput
       label={t('settings.security.basicAuthentication.passwordLabel')}
-      bind:value={settings.basicAuth.password}
+      value={settings.basicAuth.password}
       type="password"
       helpText={t('settings.security.basicAuthentication.passwordHelpText')}
       disabled={!settings.basicAuth?.enabled || store.isLoading || store.isSaving}
@@ -253,7 +291,7 @@
 
     <MobileToggle
       label={t('settings.security.oauth.google.enableLabel')}
-      bind:checked={settings.googleAuth.enabled}
+      checked={settings.googleAuth.enabled}
       disabled={store.isLoading || store.isSaving}
       onchange={updateGoogleAuthEnabled}
     />
@@ -266,7 +304,7 @@
 
       <MobileTextInput
         label={t('settings.security.oauth.google.clientIdLabel')}
-        bind:value={settings.googleAuth.clientId}
+        value={settings.googleAuth.clientId}
         type="password"
         helpText={t('settings.security.oauth.google.clientIdHelpText')}
         disabled={store.isLoading || store.isSaving}
@@ -275,7 +313,7 @@
 
       <MobileTextInput
         label={t('settings.security.oauth.google.clientSecretLabel')}
-        bind:value={settings.googleAuth.clientSecret}
+        value={settings.googleAuth.clientSecret}
         type="password"
         helpText={t('settings.security.oauth.google.clientSecretHelpText')}
         disabled={store.isLoading || store.isSaving}
@@ -284,7 +322,7 @@
 
       <MobileTextInput
         label={t('settings.security.oauth.google.userIdLabel')}
-        bind:value={settings.googleAuth.userId}
+        value={settings.googleAuth.userId}
         placeholder={t('settings.security.placeholders.allowedUsers')}
         disabled={store.isLoading || store.isSaving}
         onchange={updateGoogleUserId}
@@ -305,7 +343,7 @@
 
     <MobileToggle
       label={t('settings.security.oauth.github.enableLabel')}
-      bind:checked={settings.githubAuth.enabled}
+      checked={settings.githubAuth.enabled}
       disabled={store.isLoading || store.isSaving}
       onchange={updateGithubAuthEnabled}
     />
@@ -318,7 +356,7 @@
 
       <MobileTextInput
         label={t('settings.security.oauth.github.clientIdLabel')}
-        bind:value={settings.githubAuth.clientId}
+        value={settings.githubAuth.clientId}
         type="password"
         helpText={t('settings.security.oauth.github.clientIdHelpText')}
         disabled={store.isLoading || store.isSaving}
@@ -327,7 +365,7 @@
 
       <MobileTextInput
         label={t('settings.security.oauth.github.clientSecretLabel')}
-        bind:value={settings.githubAuth.clientSecret}
+        value={settings.githubAuth.clientSecret}
         type="password"
         helpText={t('settings.security.oauth.github.clientSecretHelpText')}
         disabled={store.isLoading || store.isSaving}
@@ -336,7 +374,7 @@
 
       <MobileTextInput
         label={t('settings.security.oauth.github.userIdLabel')}
-        bind:value={settings.githubAuth.userId}
+        value={settings.githubAuth.userId}
         placeholder={t('settings.security.placeholders.allowedUsers')}
         disabled={store.isLoading || store.isSaving}
         onchange={updateGithubUserId}
@@ -350,14 +388,14 @@
 
     <MobileToggle
       label={t('settings.security.allowSubnetBypassLabel')}
-      bind:checked={settings.allowSubnetBypass.enabled}
+      checked={settings.allowSubnetBypass.enabled}
       disabled={store.isLoading || store.isSaving}
       onchange={updateSubnetBypassEnabled}
     />
 
     <MobileTextInput
       label={t('settings.security.allowedSubnetsLabel')}
-      bind:value={settings.allowSubnetBypass.subnet}
+      value={settings.allowSubnetBypass.subnet}
       placeholder={t('settings.security.placeholders.subnet')}
       helpText={t('settings.security.allowedSubnetsHelp')}
       disabled={!settings.allowSubnetBypass?.enabled || store.isLoading || store.isSaving}
@@ -373,14 +411,32 @@
       </div>
     {/if}
   </div>
-</div>
+  </div>
 
-<!-- Sticky save button -->
-<div class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 pb-safe">
-  <button class="btn btn-primary w-full h-12" disabled={store.isSaving} onclick={handleSave}>
-    {#if store.isSaving}
-      <span class="loading loading-spinner loading-sm"></span>
-    {/if}
-    {t('settings.actions.save')}
-  </button>
-</div>
+  <!-- Auto-save status indicator -->
+{#if saveStatus !== 'idle'}
+  <div class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-100">
+    <div
+      class="px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium"
+      class:bg-base-200={saveStatus === 'pending'}
+      class:bg-primary={saveStatus === 'saving'}
+      class:text-primary-content={saveStatus === 'saving'}
+      class:bg-success={saveStatus === 'saved'}
+      class:text-success-content={saveStatus === 'saved'}
+    >
+      {#if saveStatus === 'pending'}
+        <span class="w-2 h-2 rounded-full bg-base-content/50 animate-pulse"></span>
+        <span>{t('settings.actions.unsavedChanges')}</span>
+      {:else if saveStatus === 'saving'}
+        <span class="loading loading-spinner loading-xs"></span>
+        <span>{t('settings.actions.saving')}</span>
+      {:else if saveStatus === 'saved'}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span>{t('settings.actions.saved')}</span>
+      {/if}
+    </div>
+  </div>
+  {/if}
+{/if}

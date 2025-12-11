@@ -791,6 +791,8 @@
     "actions": {
       "save": "Enregistrer les modifications",
       "saving": "Enregistrement...",
+      "saved": "Enregistré",
+      "saveFailed": "Échec de l'enregistrement",
       "reset": "Réinitialiser",
       "resetAriaLabel": "Réinitialiser toutes les modifications",
       "saveAriaLabel": "Enregistrer les modifications",
@@ -1437,6 +1439,10 @@
           "24db": "24dB",
           "36db": "36dB",
           "48db": "48dB"
+        },
+        "emptyState": {
+          "title": "Aucun filtre configuré",
+          "description": "Ajoutez un filtre ci-dessous pour façonner votre audio"
         },
         "filterHelp": "Ajoutez plusieurs filtres pour façonner la réponse en fréquence pour une détection optimale des oiseaux dans votre environnement."
       },

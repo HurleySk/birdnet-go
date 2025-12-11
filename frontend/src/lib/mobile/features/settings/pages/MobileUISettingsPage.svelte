@@ -19,12 +19,14 @@
   - Clear section headers
 -->
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { t, getLocale } from '$lib/i18n';
   import { LOCALES } from '$lib/i18n/config';
   import {
     settingsStore,
     settingsActions,
     dashboardSettings,
+    isLoading,
     DEFAULT_SPECTROGRAM_SETTINGS,
   } from '$lib/stores/settings';
   import type { SpectrogramPreRender } from '$lib/stores/settings';
@@ -58,16 +60,24 @@
     }, 800);
   }
 
-  // Reactive settings with proper defaults
+  // Load settings on mount to ensure data is available before saving
+  onMount(() => {
+    settingsActions.loadSettings();
+  });
+
+  // Reactive settings with proper defaults - spread $dashboardSettings first to preserve all store values
   let settings = $derived({
     dashboard: {
-      thumbnails: {
-        summary: $dashboardSettings?.thumbnails?.summary ?? true,
-        recent: $dashboardSettings?.thumbnails?.recent ?? true,
-        imageProvider: $dashboardSettings?.thumbnails?.imageProvider ?? 'wikimedia',
-        fallbackPolicy: $dashboardSettings?.thumbnails?.fallbackPolicy ?? 'all',
-      },
-      summaryLimit: $dashboardSettings?.summaryLimit ?? 100,
+      ...($dashboardSettings ?? {
+        thumbnails: {
+          summary: true,
+          recent: true,
+          imageProvider: 'wikimedia',
+          fallbackPolicy: 'all',
+        },
+        summaryLimit: 100,
+        newUI: false,
+      }),
       locale: $dashboardSettings?.locale ?? (getLocale() as string),
       newUI: $dashboardSettings?.newUI ?? false,
       spectrogram: $dashboardSettings?.spectrogram ?? DEFAULT_SPECTROGRAM_SETTINGS,
@@ -164,19 +174,32 @@
   }
 </script>
 
-<div class="flex flex-col gap-6 p-4 pb-24 overflow-x-hidden">
-  <!-- Interface Settings -->
+{#if $isLoading}
+  <div class="flex items-center justify-center p-8">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+{:else}
+  <div class="flex flex-col gap-6 p-4 pb-24 overflow-x-hidden">
+    <!-- Interface Settings -->
   <div class="space-y-4">
     <h2 class="text-lg font-semibold">
       {t('settings.main.sections.userInterface.interface.title')}
     </h2>
+
+    <MobileToggle
+      label={t('settings.main.sections.userInterface.interface.newUI.label')}
+      checked={settings.dashboard.newUI}
+      helpText={t('settings.main.sections.userInterface.interface.newUI.helpText')}
+      disabled={store.isLoading || store.isSaving}
+      onchange={value => updateDashboardSetting('newUI', value)}
+    />
 
     <MobileSelect
       label={t('settings.main.sections.userInterface.interface.locale.label')}
       value={settings.dashboard.locale}
       options={uiLocales}
       helpText={t('settings.main.sections.userInterface.interface.locale.helpText')}
-      disabled={store.isLoading || store.isSaving}
+      disabled={store.isLoading || store.isSaving || !settings.dashboard.newUI}
       onchange={updateUILocale}
     />
   </div>
@@ -315,9 +338,9 @@
       </div>
     {/if}
   </div>
-</div>
+  </div>
 
-<!-- Auto-save status indicator -->
+  <!-- Auto-save status indicator -->
 {#if saveStatus !== 'idle'}
   <div class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-100">
     <div
@@ -330,16 +353,17 @@
     >
       {#if saveStatus === 'pending'}
         <span class="w-2 h-2 rounded-full bg-base-content/50 animate-pulse"></span>
-        <span>Unsaved changes...</span>
+        <span>{t('settings.actions.unsavedChanges')}</span>
       {:else if saveStatus === 'saving'}
         <span class="loading loading-spinner loading-xs"></span>
-        <span>Saving...</span>
+        <span>{t('settings.actions.saving')}</span>
       {:else if saveStatus === 'saved'}
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
-        <span>Saved</span>
+        <span>{t('settings.actions.saved')}</span>
       {/if}
     </div>
   </div>
+  {/if}
 {/if}
