@@ -6,6 +6,7 @@
     checked: boolean;
     disabled?: boolean;
     helpText?: string;
+    helpTextHtml?: boolean;
     onchange?: (checked: boolean) => void;
   }
 
@@ -15,6 +16,7 @@
     checked = $bindable(),
     disabled = false,
     helpText,
+    helpTextHtml = false,
     onchange,
   }: Props = $props();
 
@@ -29,7 +31,13 @@
     <div class="flex flex-col gap-1 mr-4">
       <span class="label-text font-medium">{label}</span>
       {#if helpText}
-        <span class="label-text-alt text-base-content/60">{helpText}</span>
+        <span class="label-text-alt text-base-content/60">
+          {#if helpTextHtml}
+            {@html helpText}
+          {:else}
+            {helpText}
+          {/if}
+        </span>
       {/if}
     </div>
     <div class="shrink-0">

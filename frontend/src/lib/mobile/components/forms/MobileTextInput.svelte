@@ -9,6 +9,7 @@
     disabled?: boolean;
     error?: string;
     helpText?: string;
+    helpTextHtml?: boolean;
     onchange?: (value: string) => void;
   }
 
@@ -21,6 +22,7 @@
     disabled = false,
     error,
     helpText,
+    helpTextHtml = false,
     onchange,
   }: Props = $props();
 
@@ -47,7 +49,13 @@
   />
   {#if helpText && !error}
     <div class="label">
-      <span class="label-text-alt text-base-content/60">{helpText}</span>
+      <span class="label-text-alt text-base-content/60">
+        {#if helpTextHtml}
+          {@html helpText}
+        {:else}
+          {helpText}
+        {/if}
+      </span>
     </div>
   {/if}
   {#if error}

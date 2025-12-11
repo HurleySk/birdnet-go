@@ -341,6 +341,7 @@
         bind:value={supportDump.githubIssueNumber}
         placeholder={t('settings.support.supportReport.githubIssue.placeholder')}
         helpText={t('settings.support.supportReport.githubIssue.helper')}
+        helpTextHtml={true}
         disabled={generating}
         error={supportDump.uploadToSentry && !supportDump.githubIssueNumber
           ? t('settings.support.supportReport.statusMessages.githubIssueRequired')
