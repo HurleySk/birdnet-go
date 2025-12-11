@@ -28,7 +28,7 @@
     MobileNumberInput,
     MobileSlider,
     MobileToggle,
-    MobileTextInput,
+    MobileSpeciesInput,
   } from '../../../components/forms';
   import { api, ApiError } from '$lib/utils/api';
   import { loggers } from '$lib/utils/logger';
@@ -105,7 +105,6 @@
   });
 
   let newSpecies = $state('');
-  let showSpeciesInput = $state(false);
 
   // Load species list
   $effect(() => {
@@ -179,17 +178,25 @@
     debouncedSave();
   }
 
-  // Species management functions
-  function handleAddSpeciesClick() {
-    showSpeciesInput = true;
+  // Parse species name from database format: "Scientific Name_Common Name"
+  function parseSpeciesName(raw: string): { common: string; scientific: string } {
+    const parts = raw.split('_');
+    if (parts.length >= 2) {
+      return {
+        scientific: parts[0].trim(),
+        common: parts.slice(1).join('_').trim(),
+      };
+    }
+    // Fallback: treat whole string as common name
+    return { common: raw, scientific: '' };
   }
 
-  function addSpecies() {
-    if (!newSpecies.trim()) return;
+  // Species management functions
+  function handleAddSpecies(species: string) {
+    if (!species.trim()) return;
 
-    const trimmedSpecies = newSpecies.trim();
+    const trimmedSpecies = species.trim();
     if (settings.dogBark.species.includes(trimmedSpecies)) {
-      newSpecies = '';
       return;
     }
 
@@ -199,8 +206,6 @@
       dogBarkFilter: { ...settings.dogBark, species: updatedSpecies },
     });
 
-    newSpecies = '';
-    showSpeciesInput = false;
     debouncedSave();
   }
 
@@ -212,18 +217,6 @@
     });
     debouncedSave();
   }
-
-  function cancelAddSpecies() {
-    newSpecies = '';
-    showSpeciesInput = false;
-  }
-
-  // Filtered species list for autocomplete
-  let filteredSpecies = $derived(
-    newSpecies
-      ? speciesListState.data.filter(s => s.toLowerCase().includes(newSpecies.toLowerCase()))
-      : speciesListState.data
-  );
 </script>
 
 {#if $isLoading}
@@ -231,168 +224,125 @@
     <span class="loading loading-spinner loading-lg text-primary"></span>
   </div>
 {:else}
-<div class="flex flex-col gap-6 p-4 pb-24 overflow-x-hidden">
-  <!-- Privacy Filter -->
-  <div class="space-y-4">
-    <h2 class="text-lg font-semibold">{t('settings.filters.privacyFiltering.title')}</h2>
-    <p class="text-sm text-base-content/60">
-      {t('settings.filters.privacyFiltering.description')}
-    </p>
-    <MobileToggle
-      label={t('settings.filters.privacyFiltering.enable')}
-      checked={settings.privacy.enabled}
-      disabled={store.isLoading || store.isSaving}
-      onchange={updatePrivacyEnabled}
-    />
-    {#if settings.privacy.enabled}
-      <MobileSlider
-        label={t('settings.filters.privacyFiltering.confidenceLabel')}
-        value={settings.privacy.confidence}
-        min={0}
-        max={1}
-        step={0.01}
-        helpText={t('settings.filters.privacyFiltering.confidenceHelp')}
-        disabled={!settings.privacy.enabled || store.isLoading || store.isSaving}
-        onUpdate={updatePrivacyConfidence}
+  <div class="flex flex-col gap-6 p-4 pb-24 overflow-x-hidden">
+    <!-- Privacy Filter -->
+    <div class="space-y-4">
+      <h2 class="text-lg font-semibold">{t('settings.filters.privacyFiltering.title')}</h2>
+      <p class="text-sm text-base-content/60">
+        {t('settings.filters.privacyFiltering.description')}
+      </p>
+      <MobileToggle
+        label={t('settings.filters.privacyFiltering.enable')}
+        checked={settings.privacy.enabled}
+        disabled={store.isLoading || store.isSaving}
+        onchange={updatePrivacyEnabled}
       />
-    {/if}
-  </div>
+      {#if settings.privacy.enabled}
+        <MobileSlider
+          label={t('settings.filters.privacyFiltering.confidenceLabel')}
+          value={settings.privacy.confidence}
+          min={0}
+          max={1}
+          step={0.01}
+          helpText={t('settings.filters.privacyFiltering.confidenceHelp')}
+          disabled={!settings.privacy.enabled || store.isLoading || store.isSaving}
+          onUpdate={updatePrivacyConfidence}
+        />
+      {/if}
+    </div>
 
-  <!-- Dog Bark Filter -->
-  <div class="space-y-4">
-    <h2 class="text-lg font-semibold">{t('settings.filters.falsePositivePrevention.title')}</h2>
-    <p class="text-sm text-base-content/60">
-      {t('settings.filters.falsePositivePrevention.description')}
-    </p>
-    <MobileToggle
-      label={t('settings.filters.falsePositivePrevention.enableDogBark')}
-      checked={settings.dogBark.enabled}
-      disabled={store.isLoading || store.isSaving}
-      onchange={updateDogBarkEnabled}
-    />
-    {#if settings.dogBark.enabled}
-      <MobileSlider
-        label={t('settings.filters.falsePositivePrevention.confidenceLabel')}
-        value={settings.dogBark.confidence}
-        min={0}
-        max={1}
-        step={0.01}
-        helpText={t('settings.filters.falsePositivePrevention.confidenceHelp')}
-        disabled={!settings.dogBark.enabled || store.isLoading || store.isSaving}
-        onUpdate={updateDogBarkConfidence}
+    <!-- Dog Bark Filter -->
+    <div class="space-y-4">
+      <h2 class="text-lg font-semibold">{t('settings.filters.falsePositivePrevention.title')}</h2>
+      <p class="text-sm text-base-content/60">
+        {t('settings.filters.falsePositivePrevention.description')}
+      </p>
+      <MobileToggle
+        label={t('settings.filters.falsePositivePrevention.enableDogBark')}
+        checked={settings.dogBark.enabled}
+        disabled={store.isLoading || store.isSaving}
+        onchange={updateDogBarkEnabled}
       />
-      <MobileNumberInput
-        label={t('settings.filters.falsePositivePrevention.expireTimeLabel')}
-        value={settings.dogBark.remember}
-        min={0}
-        step={1}
-        suffix=" min"
-        helpText={t('settings.filters.falsePositivePrevention.expireTimeHelp')}
-        disabled={!settings.dogBark.enabled || store.isLoading || store.isSaving}
-        onUpdate={updateDogBarkRemember}
-      />
+      {#if settings.dogBark.enabled}
+        <MobileSlider
+          label={t('settings.filters.falsePositivePrevention.confidenceLabel')}
+          value={settings.dogBark.confidence}
+          min={0}
+          max={1}
+          step={0.01}
+          helpText={t('settings.filters.falsePositivePrevention.confidenceHelp')}
+          disabled={!settings.dogBark.enabled || store.isLoading || store.isSaving}
+          onUpdate={updateDogBarkConfidence}
+        />
+        <MobileNumberInput
+          label={t('settings.filters.falsePositivePrevention.expireTimeLabel')}
+          value={settings.dogBark.remember}
+          min={0}
+          step={1}
+          suffix=" min"
+          helpText={t('settings.filters.falsePositivePrevention.expireTimeHelp')}
+          disabled={!settings.dogBark.enabled || store.isLoading || store.isSaving}
+          onUpdate={updateDogBarkRemember}
+        />
 
-      <!-- Dog Bark Species List -->
-      <div class="space-y-3">
-        <h3 class="text-sm font-medium">{t('settings.filters.dogBarkSpeciesList')}</h3>
+        <!-- Dog Bark Species List -->
+        <div class="space-y-3">
+          <h3 class="text-sm font-medium">{t('settings.filters.dogBarkSpeciesList')}</h3>
 
-        <!-- Species List -->
-        {#if settings.dogBark.species.length > 0}
-          <div class="space-y-2">
-            {#each settings.dogBark.species as species, index (species)}
-              <div
-                class="flex items-center justify-between p-3 bg-base-200 rounded-lg min-h-[44px]"
-              >
-                <span class="text-sm flex-1">{species}</span>
-                <button
-                  type="button"
-                  class="btn btn-ghost btn-sm btn-square min-h-[44px] min-w-[44px]"
-                  onclick={() => removeSpecies(index)}
-                  disabled={!settings.dogBark.enabled || store.isLoading || store.isSaving}
-                  aria-label={t('common.aria.removeSpecies')}
+          <!-- Species List -->
+          {#if settings.dogBark.species.length > 0}
+            <div class="space-y-2">
+              {#each settings.dogBark.species as species, index (species)}
+                {@const parsed = parseSpeciesName(species)}
+                <div
+                  class="flex items-center justify-between p-3 bg-base-100 border border-base-200 rounded-lg min-h-[44px] shadow-sm"
                 >
-                  <Trash2 class="size-5" />
-                </button>
-              </div>
-            {/each}
-          </div>
-        {/if}
-
-        <!-- Add Species Button / Input -->
-        {#if !showSpeciesInput}
-          <button
-            type="button"
-            class="btn btn-outline w-full h-12"
-            onclick={handleAddSpeciesClick}
-            disabled={!settings.dogBark.enabled || store.isLoading || store.isSaving}
-          >
-            {t('settings.filters.falsePositivePrevention.addSpeciesButton')}
-          </button>
-        {:else}
-          <div class="space-y-2">
-            <MobileTextInput
-              label={t('settings.filters.falsePositivePrevention.addDogBarkSpeciesLabel')}
-              value={newSpecies}
-              placeholder={t('settings.filters.typeSpeciesName')}
-              helpText={t('settings.filters.falsePositivePrevention.addDogBarkSpeciesHelp')}
-              disabled={!settings.dogBark.enabled ||
-                store.isLoading ||
-                store.isSaving ||
-                speciesListState.loading}
-              onchange={v => (newSpecies = v)}
-            />
-
-            <!-- Species suggestions -->
-            {#if newSpecies && filteredSpecies.length > 0}
-              <div class="bg-base-200 rounded-lg max-h-48 overflow-y-auto">
-                {#each filteredSpecies.slice(0, 5) as species (species)}
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-sm truncate">{parsed.common}</div>
+                    {#if parsed.scientific}
+                      <div class="text-xs text-base-content/50 italic truncate">
+                        {parsed.scientific}
+                      </div>
+                    {/if}
+                  </div>
                   <button
                     type="button"
-                    class="w-full text-left px-4 py-3 hover:bg-base-300 transition-colors min-h-[44px]"
-                    onclick={() => {
-                      newSpecies = species;
-                      addSpecies();
-                    }}
+                    class="btn btn-ghost btn-sm btn-square min-h-[44px] min-w-[44px] text-base-content/40 hover:text-error"
+                    onclick={() => removeSpecies(index)}
+                    disabled={!settings.dogBark.enabled || store.isLoading || store.isSaving}
+                    aria-label={t('common.aria.removeSpecies')}
                   >
-                    {species}
+                    <Trash2 class="size-4" />
                   </button>
-                {/each}
-              </div>
-            {/if}
-
-            <div class="flex gap-2">
-              <button
-                type="button"
-                class="btn btn-primary flex-1 h-12"
-                onclick={addSpecies}
-                disabled={!newSpecies.trim() ||
-                  !settings.dogBark.enabled ||
-                  store.isLoading ||
-                  store.isSaving}
-              >
-                {t('common.actions.add')}
-              </button>
-              <button
-                type="button"
-                class="btn btn-ghost flex-1 h-12"
-                onclick={cancelAddSpecies}
-                disabled={store.isLoading || store.isSaving}
-              >
-                {t('common.actions.cancel')}
-              </button>
+                </div>
+              {/each}
             </div>
-          </div>
-        {/if}
-      </div>
-    {/if}
-  </div>
+          {/if}
 
-</div>
+          <!-- Add Species Input with Autocomplete -->
+          <MobileSpeciesInput
+            label={t('settings.filters.falsePositivePrevention.addDogBarkSpeciesLabel')}
+            bind:value={newSpecies}
+            placeholder={t('settings.filters.typeSpeciesName')}
+            helpText={t('settings.filters.falsePositivePrevention.addDogBarkSpeciesHelp')}
+            predictions={speciesListState.data}
+            disabled={!settings.dogBark.enabled ||
+              store.isLoading ||
+              store.isSaving ||
+              speciesListState.loading}
+            onAdd={handleAddSpecies}
+          />
+        </div>
+      {/if}
+    </div>
+  </div>
 {/if}
 
 <!-- Auto-save status indicator -->
 {#if saveStatus !== 'idle'}
-  <div class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-100">
+  <div
+    class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-100"
+  >
     <div
       class="px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium"
       class:bg-base-200={saveStatus === 'pending'}
@@ -409,7 +359,12 @@
         <span>{t('settings.actions.saving')}</span>
       {:else if saveStatus === 'saved'}
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
+          />
         </svg>
         <span>{t('settings.actions.saved')}</span>
       {/if}

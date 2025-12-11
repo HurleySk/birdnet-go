@@ -12,6 +12,8 @@
     "filter": "Suodata",
     "sort": "Lajittele",
     "actions": {
+      "add": "Lisää",
+      "cancel": "Peruuta",
       "download": "Lataa",
       "review": "Tarkastele"
     },

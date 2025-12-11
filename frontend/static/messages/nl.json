@@ -29,6 +29,8 @@
     "pageNotFound": "Pagina niet gevonden",
     "internalServerError": "Interne server fout",
     "actions": {
+      "add": "Toevoegen",
+      "cancel": "Annuleren",
       "download": "Ophalen",
       "review": "Beoordeling"
     },

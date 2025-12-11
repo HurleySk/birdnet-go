@@ -12,6 +12,8 @@
     "filter": "Filtern",
     "sort": "Sortieren",
     "actions": {
+      "add": "Hinzufügen",
+      "cancel": "Abbrechen",
       "download": "Herunterladen",
       "review": "Überprüfen"
     },

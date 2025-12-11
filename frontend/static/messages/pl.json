@@ -29,6 +29,8 @@
     "pageNotFound": "Strona Nie Znaleziona",
     "internalServerError": "Wewnętrzny Błąd Serwera",
     "actions": {
+      "add": "Dodaj",
+      "cancel": "Anuluj",
       "download": "Pobierz",
       "review": "Przejrzyj"
     },

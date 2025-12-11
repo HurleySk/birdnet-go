@@ -14,6 +14,8 @@
     "done": "Terminé",
     "loadMore": "Charger plus",
     "actions": {
+      "add": "Ajouter",
+      "cancel": "Annuler",
       "download": "Télécharger",
       "review": "Réviser"
     },

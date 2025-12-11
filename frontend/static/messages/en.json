@@ -29,6 +29,8 @@
     "pageNotFound": "Page Not Found",
     "internalServerError": "Internal Server Error",
     "actions": {
+      "add": "Add",
+      "cancel": "Cancel",
       "download": "Download",
       "review": "Review"
     },
