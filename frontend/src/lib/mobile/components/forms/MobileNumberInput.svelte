@@ -73,7 +73,7 @@
         {max}
         {step}
         {disabled}
-        class="input input-bordered w-full h-12 text-center"
+        class="input input-bordered w-full h-12 text-center pr-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         class:input-error={error}
         oninput={handleInput}
       />

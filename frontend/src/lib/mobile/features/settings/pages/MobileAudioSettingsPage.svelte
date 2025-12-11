@@ -154,14 +154,17 @@
     { value: 'udp', label: 'UDP' },
   ];
 
-  // Attenuation options for audio filters (passes → dB)
-  const attenuationOptions = [
-    { value: '0', label: t('settings.audio.audioFilters.attenuationLevels.0db') },
-    { value: '1', label: t('settings.audio.audioFilters.attenuationLevels.12db') },
-    { value: '2', label: t('settings.audio.audioFilters.attenuationLevels.24db') },
-    { value: '3', label: t('settings.audio.audioFilters.attenuationLevels.36db') },
-    { value: '4', label: t('settings.audio.audioFilters.attenuationLevels.48db') },
-  ];
+  // Attenuation options for audio filters (passes → dB) - must be reactive
+  const attenuationOptions = $derived.by(() => {
+    getLocale(); // Trigger reactivity on locale change
+    return [
+      { value: '0', label: t('settings.audio.audioFilters.attenuationLevels.0db') },
+      { value: '1', label: t('settings.audio.audioFilters.attenuationLevels.12db') },
+      { value: '2', label: t('settings.audio.audioFilters.attenuationLevels.24db') },
+      { value: '3', label: t('settings.audio.audioFilters.attenuationLevels.36db') },
+      { value: '4', label: t('settings.audio.audioFilters.attenuationLevels.48db') },
+    ];
+  });
 
   // Filter type interface
   interface FilterParameter {
@@ -191,13 +194,29 @@
   const FALLBACK_EQ_FILTER_CONFIG: Record<string, FilterTypeConfig> = {
     LowPass: {
       Parameters: [
-        { Name: 'Frequency', Label: 'Cutoff Frequency', Type: 'number', Unit: 'Hz', Min: 20, Max: 20000, Default: 15000 },
+        {
+          Name: 'Frequency',
+          Label: 'Cutoff Frequency',
+          Type: 'number',
+          Unit: 'Hz',
+          Min: 20,
+          Max: 20000,
+          Default: 15000,
+        },
         { Name: 'Passes', Label: 'Attenuation', Type: 'number', Min: 1, Max: 4, Default: 1 },
       ],
     },
     HighPass: {
       Parameters: [
-        { Name: 'Frequency', Label: 'Cutoff Frequency', Type: 'number', Unit: 'Hz', Min: 20, Max: 20000, Default: 100 },
+        {
+          Name: 'Frequency',
+          Label: 'Cutoff Frequency',
+          Type: 'number',
+          Unit: 'Hz',
+          Min: 20,
+          Max: 20000,
+          Default: 100,
+        },
         { Name: 'Passes', Label: 'Attenuation', Type: 'number', Min: 1, Max: 4, Default: 1 },
       ],
     },
@@ -315,12 +334,13 @@
 
   // Update a filter parameter
   function updateFilter(index: number, key: string, value: number) {
-    const updatedFilters = settings.audio.equalizer.filters?.map((filter, i) => {
-      if (i === index) {
-        return { ...filter, [key]: value };
-      }
-      return filter;
-    }) ?? [];
+    const updatedFilters =
+      settings.audio.equalizer.filters?.map((filter, i) => {
+        if (i === index) {
+          return { ...filter, [key]: value };
+        }
+        return filter;
+      }) ?? [];
     settingsActions.updateSection('realtime', {
       audio: {
         ...settings.audio,
@@ -614,395 +634,408 @@
     <span class="loading loading-spinner loading-lg text-primary"></span>
   </div>
 {:else}
-<div class="flex flex-col gap-6 p-4 pb-24 overflow-x-hidden">
-  <!-- Audio Capture -->
-  <div class="space-y-4">
-    <h2 class="text-lg font-semibold">{t('settings.audio.audioCapture.title')}</h2>
-    {#if audioDevicesLoading}
-      <div class="flex items-center justify-center py-8">
-        <span class="loading loading-spinner loading-md"></span>
-      </div>
-    {:else}
-      <MobileSelect
-        label={t('settings.audio.audioCapture.audioSourceLabel')}
-        value={settings.audio.source}
-        options={[
-          { value: '', label: t('settings.audio.audioCapture.noSoundCardCapture') },
-          ...audioDevices.map(d => ({ value: d.Name, label: d.Name })),
-        ]}
-        helpText={t('settings.audio.audioCapture.audioSourceHelp')}
-        disabled={store.isLoading || store.isSaving}
-        onchange={updateAudioSource}
-      />
-    {/if}
-  </div>
-
-  <!-- RTSP Streams -->
-  <div class="space-y-4">
-    <h2 class="text-lg font-semibold">{t('settings.audio.rtspStreams.title')}</h2>
-    <MobileSelect
-      label={t('settings.audio.audioCapture.rtspTransportLabel')}
-      value={settings.rtsp.transport}
-      options={transportOptions}
-      helpText={t('settings.audio.audioCapture.rtspTransportHelp')}
-      disabled={store.isLoading || store.isSaving}
-      onchange={updateRTSPTransport}
-    />
-    <p class="text-sm text-base-content/60">
-      {t('settings.audio.rtspStreams.description')}
-    </p>
-  </div>
-
-  <!-- Audio Filters -->
-  <div class="space-y-4">
-    <h2 class="text-lg font-semibold">{t('settings.audio.audioFilters.title')}</h2>
-    <MobileToggle
-      label={t('settings.audio.audioFilters.enableEqualizer')}
-      checked={settings.audio.equalizer.enabled}
-      helpText={t('settings.audio.audioFilters.enableEqualizerHelp')}
-      disabled={store.isLoading || store.isSaving}
-      onchange={updateEqualizerEnabled}
-    />
-
-    {#if settings.audio.equalizer.enabled}
-      <!-- Loading state -->
-      {#if loadingFilterConfig}
-        <div class="flex justify-center p-4">
-          <span class="loading loading-spinner loading-sm"></span>
+  <div class="flex flex-col gap-6 p-4 pb-24 overflow-x-hidden">
+    <!-- Audio Capture -->
+    <div class="space-y-4">
+      <h2 class="text-lg font-semibold">{t('settings.audio.audioCapture.title')}</h2>
+      {#if audioDevicesLoading}
+        <div class="flex items-center justify-center py-8">
+          <span class="loading loading-spinner loading-md"></span>
         </div>
       {:else}
-        <!-- Existing Filters List -->
-        {#if settings.audio.equalizer.filters && settings.audio.equalizer.filters.length > 0}
-          <div class="space-y-3">
-            {#each settings.audio.equalizer.filters as filter, index (filter.id ?? index)}
-              <div class="rounded-lg bg-base-200 overflow-hidden">
-                <!-- Color-coded left border: warm for highpass, cool for lowpass -->
-                <div
-                  class="flex border-l-4 p-4"
-                  class:border-amber-500={filter.type === 'highpass'}
-                  class:border-sky-500={filter.type === 'lowpass'}
-                >
-                  <div class="flex-1 space-y-3">
-                    <!-- Header with type badge and delete -->
-                    <div class="flex items-center justify-between">
-                      <span class="text-sm font-semibold uppercase tracking-wide opacity-70">
-                        {filter.type}
-                      </span>
-                      <button
-                        type="button"
-                        class="btn btn-ghost btn-xs text-error"
-                        onclick={() => removeFilter(index)}
-                        disabled={store.isLoading || store.isSaving}
-                        aria-label={t('settings.audio.audioFilters.remove')}
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                    <!-- Frequency - prominent display -->
-                    <MobileNumberInput
-                      label={t('settings.audio.audioFilters.cutoffFrequency')}
-                      value={filter.frequency}
-                      min={20}
-                      max={20000}
-                      step={10}
-                      suffix=" Hz"
-                      disabled={store.isLoading || store.isSaving}
-                      onUpdate={v => updateFilter(index, 'frequency', v)}
-                    />
-                    <!-- Attenuation selector -->
-                    <MobileSelect
-                      label={t('settings.audio.audioFilters.attenuation')}
-                      value={String(filter.passes ?? 1)}
-                      options={attenuationOptions}
-                      disabled={store.isLoading || store.isSaving}
-                      onchange={v => updateFilter(index, 'passes', parseInt(v))}
-                    />
-                  </div>
-                </div>
-              </div>
-            {/each}
+        <MobileSelect
+          label={t('settings.audio.audioCapture.audioSourceLabel')}
+          value={settings.audio.source}
+          options={[
+            { value: '', label: t('settings.audio.audioCapture.noSoundCardCapture') },
+            ...audioDevices.map(d => ({ value: d.Name, label: d.Name })),
+          ]}
+          helpText={t('settings.audio.audioCapture.audioSourceHelp')}
+          disabled={store.isLoading || store.isSaving}
+          onchange={updateAudioSource}
+        />
+      {/if}
+    </div>
+
+    <!-- RTSP Streams -->
+    <div class="space-y-4">
+      <h2 class="text-lg font-semibold">{t('settings.audio.rtspStreams.title')}</h2>
+      <MobileSelect
+        label={t('settings.audio.audioCapture.rtspTransportLabel')}
+        value={settings.rtsp.transport}
+        options={transportOptions}
+        helpText={t('settings.audio.audioCapture.rtspTransportHelp')}
+        disabled={store.isLoading || store.isSaving}
+        onchange={updateRTSPTransport}
+      />
+      <p class="text-sm text-base-content/60">
+        {t('settings.audio.rtspStreams.description')}
+      </p>
+    </div>
+
+    <!-- Audio Filters -->
+    <div class="space-y-4">
+      <h2 class="text-lg font-semibold">{t('settings.audio.audioFilters.title')}</h2>
+      <MobileToggle
+        label={t('settings.audio.audioFilters.enableEqualizer')}
+        checked={settings.audio.equalizer.enabled}
+        helpText={t('settings.audio.audioFilters.enableEqualizerHelp')}
+        disabled={store.isLoading || store.isSaving}
+        onchange={updateEqualizerEnabled}
+      />
+
+      {#if settings.audio.equalizer.enabled}
+        <!-- Loading state -->
+        {#if loadingFilterConfig}
+          <div class="flex justify-center p-4">
+            <span class="loading loading-spinner loading-sm"></span>
           </div>
         {:else}
-          <!-- Empty state -->
-          <div class="text-center py-6 text-base-content/50">
-            <p class="text-sm">{t('settings.audio.audioFilters.emptyState.title')}</p>
-            <p class="text-xs mt-1">{t('settings.audio.audioFilters.emptyState.description')}</p>
+          <!-- Existing Filters List -->
+          {#if settings.audio.equalizer.filters && settings.audio.equalizer.filters.length > 0}
+            <div class="space-y-3">
+              {#each settings.audio.equalizer.filters as filter, index (filter.id ?? index)}
+                {@const filterTypeLower = filter.type.toLowerCase()}
+                <!-- Color-coded left border: amber for highpass, sky for lowpass -->
+                <div
+                  class="rounded-lg bg-base-100 shadow-sm border border-base-200 border-l-4 p-4 space-y-3"
+                  class:border-l-amber-500={filterTypeLower === 'highpass'}
+                  class:border-l-sky-500={filterTypeLower === 'lowpass'}
+                  class:border-l-base-300={filterTypeLower !== 'highpass' &&
+                    filterTypeLower !== 'lowpass'}
+                >
+                  <!-- Header with colored badge and delete -->
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded {filterTypeLower ===
+                      'highpass'
+                        ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400'
+                        : filterTypeLower === 'lowpass'
+                          ? 'bg-sky-500/20 text-sky-700 dark:text-sky-400'
+                          : ''}"
+                    >
+                      {filter.type}
+                    </span>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs text-error"
+                      onclick={() => removeFilter(index)}
+                      disabled={store.isLoading || store.isSaving}
+                      aria-label={t('settings.audio.audioFilters.remove')}
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  <!-- Frequency - prominent display -->
+                  <MobileNumberInput
+                    label={t('settings.audio.audioFilters.cutoffFrequency')}
+                    value={filter.frequency}
+                    min={20}
+                    max={20000}
+                    step={10}
+                    suffix="Hz"
+                    disabled={store.isLoading || store.isSaving}
+                    onUpdate={v => updateFilter(index, 'frequency', v)}
+                  />
+                  <!-- Attenuation selector -->
+                  <MobileSelect
+                    label={t('settings.audio.audioFilters.attenuation')}
+                    value={String(filter.passes ?? 1)}
+                    options={attenuationOptions}
+                    disabled={store.isLoading || store.isSaving}
+                    onchange={v => updateFilter(index, 'passes', parseInt(v))}
+                  />
+                </div>
+              {/each}
+            </div>
+          {:else}
+            <!-- Empty state -->
+            <div class="text-center py-6 text-base-content/50">
+              <p class="text-sm">{t('settings.audio.audioFilters.emptyState.title')}</p>
+              <p class="text-xs mt-1">{t('settings.audio.audioFilters.emptyState.description')}</p>
+            </div>
+          {/if}
+
+          <!-- Add New Filter Section -->
+          <div class="card bg-base-100 border border-base-300 mt-4">
+            <div class="card-body p-4 space-y-4">
+              <h3 class="font-medium text-sm">
+                {t('settings.audio.audioFilters.newFilterType')}
+              </h3>
+              <MobileSelect
+                label={t('settings.audio.audioFilters.filterType')}
+                value={newFilterType}
+                options={filterTypeOptions}
+                disabled={store.isLoading || store.isSaving}
+                onchange={handleFilterTypeChange}
+              />
+              {#if newFilterType}
+                <MobileNumberInput
+                  label={t('settings.audio.audioFilters.cutoffFrequency')}
+                  value={newFilterFrequency}
+                  min={20}
+                  max={20000}
+                  step={10}
+                  suffix=" Hz"
+                  helpText={t('settings.audio.audioFilters.cutoffFrequencyHelp')}
+                  disabled={store.isLoading || store.isSaving}
+                  onUpdate={v => (newFilterFrequency = v)}
+                />
+                <MobileSelect
+                  label={t('settings.audio.audioFilters.attenuation')}
+                  value={String(newFilterPasses)}
+                  options={attenuationOptions}
+                  disabled={store.isLoading || store.isSaving}
+                  onchange={v => (newFilterPasses = parseInt(v))}
+                />
+                <button
+                  type="button"
+                  class="btn btn-primary w-full h-12"
+                  onclick={addFilter}
+                  disabled={!newFilterType || store.isLoading || store.isSaving}
+                >
+                  {t('settings.audio.audioFilters.addFilter')}
+                </button>
+              {/if}
+            </div>
           </div>
         {/if}
-
-        <!-- Add New Filter Section -->
-        <div class="card bg-base-100 border border-base-300 mt-4">
-          <div class="card-body p-4 space-y-4">
-            <h3 class="font-medium text-sm">
-              {t('settings.audio.audioFilters.newFilterType')}
-            </h3>
-            <MobileSelect
-              label={t('settings.audio.audioFilters.filterType')}
-              value={newFilterType}
-              options={filterTypeOptions}
-              disabled={store.isLoading || store.isSaving}
-              onchange={handleFilterTypeChange}
-            />
-            {#if newFilterType}
-              <MobileNumberInput
-                label={t('settings.audio.audioFilters.cutoffFrequency')}
-                value={newFilterFrequency}
-                min={20}
-                max={20000}
-                step={10}
-                suffix=" Hz"
-                helpText={t('settings.audio.audioFilters.cutoffFrequencyHelp')}
-                disabled={store.isLoading || store.isSaving}
-                onUpdate={v => (newFilterFrequency = v)}
-              />
-              <MobileSelect
-                label={t('settings.audio.audioFilters.attenuation')}
-                value={String(newFilterPasses)}
-                options={attenuationOptions}
-                disabled={store.isLoading || store.isSaving}
-                onchange={v => (newFilterPasses = parseInt(v))}
-              />
-              <button
-                type="button"
-                class="btn btn-primary w-full h-12"
-                onclick={addFilter}
-                disabled={!newFilterType || store.isLoading || store.isSaving}
-              >
-                {t('settings.audio.audioFilters.addFilter')}
-              </button>
-            {/if}
-          </div>
-        </div>
       {/if}
-    {/if}
-  </div>
+    </div>
 
-  <!-- Sound Level Monitoring -->
-  <div class="space-y-4">
-    <h2 class="text-lg font-semibold">{t('settings.audio.soundLevelMonitoring.title')}</h2>
-    <MobileToggle
-      label={t('settings.audio.soundLevelMonitoring.enable')}
-      checked={settings.audio.soundLevel.enabled}
-      helpText={t('settings.audio.soundLevelMonitoring.enableHelp')}
-      disabled={store.isLoading || store.isSaving}
-      onchange={updateSoundLevelEnabled}
-    />
-    {#if settings.audio.soundLevel.enabled}
-      <MobileNumberInput
-        label={t('settings.audio.soundLevelMonitoring.intervalLabel')}
-        value={settings.audio.soundLevel.interval}
-        min={5}
-        max={300}
-        step={1}
-        suffix="s"
-        helpText={t('settings.audio.soundLevelMonitoring.intervalHelp')}
-        disabled={!settings.audio.soundLevel.enabled || store.isLoading || store.isSaving}
-        onUpdate={updateSoundLevelInterval}
-      />
-    {/if}
-  </div>
-
-  <!-- Audio Normalization -->
-  <div class="space-y-4">
-    <h2 class="text-lg font-semibold">{t('settings.audio.audioNormalization.title')}</h2>
-    <MobileToggle
-      label={t('settings.audio.audioNormalization.enable')}
-      checked={settings.audio.export.normalization.enabled}
-      helpText={t('settings.audio.audioNormalization.enableHelp')}
-      disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
-      onchange={updateNormalizationEnabled}
-    />
-    {#if settings.audio.export.normalization.enabled && settings.audio.export.enabled}
-      <MobileSlider
-        label={t('settings.audio.audioNormalization.targetLUFSLabel')}
-        value={settings.audio.export.normalization.targetLUFS}
-        min={-40}
-        max={-10}
-        step={0.5}
-        suffix=" LUFS"
-        helpText={t('settings.audio.audioNormalization.targetLUFSHelp')}
-        disabled={!settings.audio.export.normalization.enabled || store.isLoading || store.isSaving}
-        onUpdate={updateNormalizationTargetLUFS}
-      />
-      <MobileSlider
-        label={t('settings.audio.audioNormalization.loudnessRangeLabel')}
-        value={settings.audio.export.normalization.loudnessRange}
-        min={0}
-        max={20}
-        step={0.5}
-        suffix=" LU"
-        helpText={t('settings.audio.audioNormalization.loudnessRangeHelp')}
-        disabled={!settings.audio.export.normalization.enabled || store.isLoading || store.isSaving}
-        onUpdate={updateNormalizationLoudnessRange}
-      />
-      <MobileSlider
-        label={t('settings.audio.audioNormalization.truePeakLabel')}
-        value={settings.audio.export.normalization.truePeak}
-        min={-10}
-        max={0}
-        step={0.1}
-        suffix=" dBTP"
-        helpText={t('settings.audio.audioNormalization.truePeakHelp')}
-        disabled={!settings.audio.export.normalization.enabled || store.isLoading || store.isSaving}
-        onUpdate={updateNormalizationTruePeak}
-      />
-    {/if}
-  </div>
-
-  <!-- Clip Recording -->
-  <div class="space-y-4">
-    <h2 class="text-lg font-semibold">{t('settings.audio.clipRecording.title')}</h2>
-    <MobileToggle
-      label={t('settings.audio.clipRecording.enable')}
-      checked={settings.audio.export.enabled}
-      helpText={t('settings.audio.clipRecording.enableHelp')}
-      disabled={store.isLoading || store.isSaving}
-      onchange={updateExportEnabled}
-    />
-    {#if settings.audio.export.enabled}
-      <MobileSlider
-        label={t('settings.audio.clipRecording.lengthLabel')}
-        value={settings.audio.export.length}
-        min={10}
-        max={60}
-        step={1}
-        suffix="s"
-        helpText={t('settings.audio.clipRecording.lengthHelp')}
-        disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
-        onUpdate={updateExportLength}
-      />
-      <MobileSlider
-        label={t('settings.audio.clipRecording.preCaptureLabel')}
-        value={settings.audio.export.preCapture}
-        min={0}
-        max={Math.floor(settings.audio.export.length / 2)}
-        step={1}
-        suffix="s"
-        helpText={t('settings.audio.clipRecording.preCaptureHelp', {
-          max: Math.floor(settings.audio.export.length / 2),
-        })}
-        disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
-        onUpdate={updateExportPreCapture}
-      />
-      <MobileSlider
-        label={t('settings.audio.clipRecording.gainLabel')}
-        value={settings.audio.export.gain}
-        min={0}
-        max={20}
-        step={1}
-        suffix=" dB"
-        helpText={t('settings.audio.clipRecording.gainHelp')}
-        disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
-        onUpdate={updateExportGain}
-      />
-    {/if}
-  </div>
-
-  <!-- File Settings -->
-  {#if settings.audio.export.enabled}
+    <!-- Sound Level Monitoring -->
     <div class="space-y-4">
-      <h2 class="text-lg font-semibold">{t('settings.audio.fileSettings.title')}</h2>
-      <MobileTextInput
-        label={t('settings.audio.fileSettings.pathLabel')}
-        value={settings.audio.export.path}
-        placeholder="clips/"
-        helpText={t('settings.audio.fileSettings.pathHelp')}
-        disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
-        onchange={updateExportPath}
+      <h2 class="text-lg font-semibold">{t('settings.audio.soundLevelMonitoring.title')}</h2>
+      <MobileToggle
+        label={t('settings.audio.soundLevelMonitoring.enable')}
+        checked={settings.audio.soundLevel.enabled}
+        helpText={t('settings.audio.soundLevelMonitoring.enableHelp')}
+        disabled={store.isLoading || store.isSaving}
+        onchange={updateSoundLevelEnabled}
       />
-      <MobileSelect
-        label={t('settings.audio.fileSettings.typeLabel')}
-        value={settings.audio.export.type}
-        options={exportFormatOptions}
-        helpText={t('settings.audio.fileSettings.typeHelp')}
+      {#if settings.audio.soundLevel.enabled}
+        <MobileNumberInput
+          label={t('settings.audio.soundLevelMonitoring.intervalLabel')}
+          value={settings.audio.soundLevel.interval}
+          min={5}
+          max={300}
+          step={1}
+          suffix="s"
+          helpText={t('settings.audio.soundLevelMonitoring.intervalHelp')}
+          disabled={!settings.audio.soundLevel.enabled || store.isLoading || store.isSaving}
+          onUpdate={updateSoundLevelInterval}
+        />
+      {/if}
+    </div>
+
+    <!-- Audio Normalization -->
+    <div class="space-y-4">
+      <h2 class="text-lg font-semibold">{t('settings.audio.audioNormalization.title')}</h2>
+      <MobileToggle
+        label={t('settings.audio.audioNormalization.enable')}
+        checked={settings.audio.export.normalization.enabled}
+        helpText={t('settings.audio.audioNormalization.enableHelp')}
         disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
-        onchange={updateExportFormat}
+        onchange={updateNormalizationEnabled}
       />
-      {#if bitrateConfig}
+      {#if settings.audio.export.normalization.enabled && settings.audio.export.enabled}
         <MobileSlider
-          label={t('settings.audio.fileSettings.bitrateLabel')}
-          value={numericBitrate}
-          min={bitrateConfig.min}
-          max={bitrateConfig.max}
-          step={bitrateConfig.step}
-          suffix="k"
-          helpText={t('settings.audio.fileSettings.bitrateHelp', {
-            min: bitrateConfig.min,
-            max: bitrateConfig.max,
+          label={t('settings.audio.audioNormalization.targetLUFSLabel')}
+          value={settings.audio.export.normalization.targetLUFS}
+          min={-40}
+          max={-10}
+          step={0.5}
+          suffix=" LUFS"
+          helpText={t('settings.audio.audioNormalization.targetLUFSHelp')}
+          disabled={!settings.audio.export.normalization.enabled ||
+            store.isLoading ||
+            store.isSaving}
+          onUpdate={updateNormalizationTargetLUFS}
+        />
+        <MobileSlider
+          label={t('settings.audio.audioNormalization.loudnessRangeLabel')}
+          value={settings.audio.export.normalization.loudnessRange}
+          min={0}
+          max={20}
+          step={0.5}
+          suffix=" LU"
+          helpText={t('settings.audio.audioNormalization.loudnessRangeHelp')}
+          disabled={!settings.audio.export.normalization.enabled ||
+            store.isLoading ||
+            store.isSaving}
+          onUpdate={updateNormalizationLoudnessRange}
+        />
+        <MobileSlider
+          label={t('settings.audio.audioNormalization.truePeakLabel')}
+          value={settings.audio.export.normalization.truePeak}
+          min={-10}
+          max={0}
+          step={0.1}
+          suffix=" dBTP"
+          helpText={t('settings.audio.audioNormalization.truePeakHelp')}
+          disabled={!settings.audio.export.normalization.enabled ||
+            store.isLoading ||
+            store.isSaving}
+          onUpdate={updateNormalizationTruePeak}
+        />
+      {/if}
+    </div>
+
+    <!-- Clip Recording -->
+    <div class="space-y-4">
+      <h2 class="text-lg font-semibold">{t('settings.audio.clipRecording.title')}</h2>
+      <MobileToggle
+        label={t('settings.audio.clipRecording.enable')}
+        checked={settings.audio.export.enabled}
+        helpText={t('settings.audio.clipRecording.enableHelp')}
+        disabled={store.isLoading || store.isSaving}
+        onchange={updateExportEnabled}
+      />
+      {#if settings.audio.export.enabled}
+        <MobileSlider
+          label={t('settings.audio.clipRecording.lengthLabel')}
+          value={settings.audio.export.length}
+          min={10}
+          max={60}
+          step={1}
+          suffix="s"
+          helpText={t('settings.audio.clipRecording.lengthHelp')}
+          disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
+          onUpdate={updateExportLength}
+        />
+        <MobileSlider
+          label={t('settings.audio.clipRecording.preCaptureLabel')}
+          value={settings.audio.export.preCapture}
+          min={0}
+          max={Math.floor(settings.audio.export.length / 2)}
+          step={1}
+          suffix="s"
+          helpText={t('settings.audio.clipRecording.preCaptureHelp', {
+            max: Math.floor(settings.audio.export.length / 2),
           })}
           disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
-          onUpdate={updateExportBitrate}
+          onUpdate={updateExportPreCapture}
         />
-      {/if}
-    </div>
-  {/if}
-
-  <!-- Retention Policy -->
-  {#if settings.audio.export.enabled}
-    <div class="space-y-4">
-      <h2 class="text-lg font-semibold">{t('settings.audio.audioClipRetention.title')}</h2>
-      <MobileSelect
-        label={t('settings.audio.audioClipRetention.policyLabel')}
-        value={retentionSettings.policy}
-        options={retentionPolicyOptions}
-        helpText={t('settings.audio.audioClipRetention.policyHelp')}
-        disabled={store.isLoading || store.isSaving}
-        onchange={updateRetentionPolicy}
-      />
-      {#if retentionSettings.policy === 'age'}
-        <MobileTextInput
-          label={t('settings.audio.audioClipRetention.maxAgeLabel')}
-          value={retentionSettings.maxAge}
-          placeholder="7d"
-          helpText={t('settings.audio.audioClipRetention.maxAgeHelp')}
-          disabled={store.isLoading || store.isSaving}
-          onchange={updateRetentionMaxAge}
-        />
-      {/if}
-      {#if retentionSettings.policy === 'usage'}
-        <MobileSelect
-          label={t('settings.audio.audioClipRetention.maxUsageLabel')}
-          value={retentionSettings.maxUsage}
-          options={maxUsageOptions}
-          helpText={t('settings.audio.audioClipRetention.maxUsageHelp')}
-          disabled={store.isLoading || store.isSaving}
-          onchange={updateRetentionMaxUsage}
-        />
-      {/if}
-      {#if retentionSettings.policy !== 'none'}
-        <MobileNumberInput
-          label={t('settings.audio.audioClipRetention.minClipsLabel')}
-          value={retentionSettings.minClips}
+        <MobileSlider
+          label={t('settings.audio.clipRecording.gainLabel')}
+          value={settings.audio.export.gain}
           min={0}
+          max={20}
           step={1}
-          helpText={t('settings.audio.audioClipRetention.minClipsHelp')}
-          disabled={store.isLoading || store.isSaving}
-          onUpdate={updateRetentionMinClips}
-        />
-        <MobileToggle
-          label={t('settings.audio.audioClipRetention.keepSpectrograms')}
-          checked={retentionSettings.keepSpectrograms}
-          helpText={t('settings.audio.audioClipRetention.keepSpectrogramsHelp')}
-          disabled={store.isLoading || store.isSaving}
-          onchange={updateRetentionKeepSpectrograms}
+          suffix=" dB"
+          helpText={t('settings.audio.clipRecording.gainHelp')}
+          disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
+          onUpdate={updateExportGain}
         />
       {/if}
     </div>
-  {/if}
 
-</div>
+    <!-- File Settings -->
+    {#if settings.audio.export.enabled}
+      <div class="space-y-4">
+        <h2 class="text-lg font-semibold">{t('settings.audio.fileSettings.title')}</h2>
+        <MobileTextInput
+          label={t('settings.audio.fileSettings.pathLabel')}
+          value={settings.audio.export.path}
+          placeholder="clips/"
+          helpText={t('settings.audio.fileSettings.pathHelp')}
+          disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
+          onchange={updateExportPath}
+        />
+        <MobileSelect
+          label={t('settings.audio.fileSettings.typeLabel')}
+          value={settings.audio.export.type}
+          options={exportFormatOptions}
+          helpText={t('settings.audio.fileSettings.typeHelp')}
+          disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
+          onchange={updateExportFormat}
+        />
+        {#if bitrateConfig}
+          <MobileSlider
+            label={t('settings.audio.fileSettings.bitrateLabel')}
+            value={numericBitrate}
+            min={bitrateConfig.min}
+            max={bitrateConfig.max}
+            step={bitrateConfig.step}
+            suffix="k"
+            helpText={t('settings.audio.fileSettings.bitrateHelp', {
+              min: bitrateConfig.min,
+              max: bitrateConfig.max,
+            })}
+            disabled={!settings.audio.export.enabled || store.isLoading || store.isSaving}
+            onUpdate={updateExportBitrate}
+          />
+        {/if}
+      </div>
+    {/if}
+
+    <!-- Retention Policy -->
+    {#if settings.audio.export.enabled}
+      <div class="space-y-4">
+        <h2 class="text-lg font-semibold">{t('settings.audio.audioClipRetention.title')}</h2>
+        <MobileSelect
+          label={t('settings.audio.audioClipRetention.policyLabel')}
+          value={retentionSettings.policy}
+          options={retentionPolicyOptions}
+          helpText={t('settings.audio.audioClipRetention.policyHelp')}
+          disabled={store.isLoading || store.isSaving}
+          onchange={updateRetentionPolicy}
+        />
+        {#if retentionSettings.policy === 'age'}
+          <MobileTextInput
+            label={t('settings.audio.audioClipRetention.maxAgeLabel')}
+            value={retentionSettings.maxAge}
+            placeholder="7d"
+            helpText={t('settings.audio.audioClipRetention.maxAgeHelp')}
+            disabled={store.isLoading || store.isSaving}
+            onchange={updateRetentionMaxAge}
+          />
+        {/if}
+        {#if retentionSettings.policy === 'usage'}
+          <MobileSelect
+            label={t('settings.audio.audioClipRetention.maxUsageLabel')}
+            value={retentionSettings.maxUsage}
+            options={maxUsageOptions}
+            helpText={t('settings.audio.audioClipRetention.maxUsageHelp')}
+            disabled={store.isLoading || store.isSaving}
+            onchange={updateRetentionMaxUsage}
+          />
+        {/if}
+        {#if retentionSettings.policy !== 'none'}
+          <MobileNumberInput
+            label={t('settings.audio.audioClipRetention.minClipsLabel')}
+            value={retentionSettings.minClips}
+            min={0}
+            step={1}
+            helpText={t('settings.audio.audioClipRetention.minClipsHelp')}
+            disabled={store.isLoading || store.isSaving}
+            onUpdate={updateRetentionMinClips}
+          />
+          <MobileToggle
+            label={t('settings.audio.audioClipRetention.keepSpectrograms')}
+            checked={retentionSettings.keepSpectrograms}
+            helpText={t('settings.audio.audioClipRetention.keepSpectrogramsHelp')}
+            disabled={store.isLoading || store.isSaving}
+            onchange={updateRetentionKeepSpectrograms}
+          />
+        {/if}
+      </div>
+    {/if}
+  </div>
 {/if}
 
 <!-- Auto-save status indicator -->
 {#if saveStatus !== 'idle'}
-  <div class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-100">
+  <div
+    class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-100"
+  >
     <div
       class="px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium"
       class:bg-base-200={saveStatus === 'pending'}
@@ -1019,7 +1052,12 @@
         <span>{t('settings.actions.saving')}</span>
       {:else if saveStatus === 'saved'}
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
+          />
         </svg>
         <span>{t('settings.actions.saved')}</span>
       {/if}
