@@ -1764,6 +1764,15 @@
         "host": "For example, localhost:8080 or example.domain.com",
         "allowedUsers": "Enter one or more allowed user emails",
         "subnet": "Enter a CIDR subnet (e.g. 192.168.1.0/24)"
+      },
+      "saveAuthSettings": "Save Authentication Settings",
+      "validation": {
+        "passwordRequired": "Password is required when Basic Auth is enabled",
+        "googleClientIdRequired": "Client ID is required for Google OAuth",
+        "googleClientSecretRequired": "Client Secret is required for Google OAuth",
+        "githubClientIdRequired": "Client ID is required for GitHub OAuth",
+        "githubClientSecretRequired": "Client Secret is required for GitHub OAuth",
+        "subnetRequired": "Subnet is required when bypass is enabled"
       }
     },
     "species": {

@@ -1630,6 +1630,15 @@
         "host": "Bijvoorbeeld, localhost:8080 of example.domain.com",
         "allowedUsers": "Voer een of meer toegestane gebruikers emails in",
         "subnet": "Voer een CIDR subnet in (bijv. 192.168.1.0/24)"
+      },
+      "saveAuthSettings": "Authenticatie-instellingen opslaan",
+      "validation": {
+        "passwordRequired": "Wachtwoord is vereist wanneer basisauthenticatie is ingeschakeld",
+        "googleClientIdRequired": "Client-ID is vereist voor Google OAuth",
+        "googleClientSecretRequired": "Clientgeheim is vereist voor Google OAuth",
+        "githubClientIdRequired": "Client-ID is vereist voor GitHub OAuth",
+        "githubClientSecretRequired": "Clientgeheim is vereist voor GitHub OAuth",
+        "subnetRequired": "Subnet is vereist wanneer bypass is ingeschakeld"
       }
     },
     "species": {

@@ -1630,6 +1630,15 @@
         "host": "Par exemple, localhost:8080 ou example.domain.com",
         "allowedUsers": "Entrez un ou plusieurs e-mails d'utilisateurs autorisés",
         "subnet": "Entrez un sous-réseau CIDR (ex : 192.168.1.0/24)"
+      },
+      "saveAuthSettings": "Enregistrer les paramètres d'authentification",
+      "validation": {
+        "passwordRequired": "Le mot de passe est requis lorsque l'authentification basique est activée",
+        "googleClientIdRequired": "L'ID client est requis pour Google OAuth",
+        "googleClientSecretRequired": "Le secret client est requis pour Google OAuth",
+        "githubClientIdRequired": "L'ID client est requis pour GitHub OAuth",
+        "githubClientSecretRequired": "Le secret client est requis pour GitHub OAuth",
+        "subnetRequired": "Le sous-réseau est requis lorsque le contournement est activé"
       }
     },
     "species": {

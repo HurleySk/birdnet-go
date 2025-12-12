@@ -1718,6 +1718,15 @@
         "host": "Esimerkiksi localhost:8080 tai example.domain.com",
         "allowedUsers": "Syötä yksi tai useampi sallittu käyttäjän sähköposti",
         "subnet": "Syötä CIDR-aliverkko (esim. 192.168.1.0/24)"
+      },
+      "saveAuthSettings": "Tallenna todennusasetukset",
+      "validation": {
+        "passwordRequired": "Salasana vaaditaan kun perustunnistus on käytössä",
+        "googleClientIdRequired": "Asiakastunnus vaaditaan Google OAuth -kirjautumiseen",
+        "googleClientSecretRequired": "Asiakassalaisuus vaaditaan Google OAuth -kirjautumiseen",
+        "githubClientIdRequired": "Asiakastunnus vaaditaan GitHub OAuth -kirjautumiseen",
+        "githubClientSecretRequired": "Asiakassalaisuus vaaditaan GitHub OAuth -kirjautumiseen",
+        "subnetRequired": "Aliverkko vaaditaan kun ohitus on käytössä"
       }
     },
     "database": {
